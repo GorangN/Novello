@@ -13,8 +13,17 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BarCodeScanner } from 'expo-barcode-scanner';
 import { searchBookByISBN, addBook } from '../services/api';
+
+// Dynamically import BarCodeScanner only on native platforms
+let BarCodeScanner: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
+  } catch (e) {
+    console.log('BarCodeScanner not available');
+  }
+}
 
 interface AddBookModalProps {
   visible: boolean;
