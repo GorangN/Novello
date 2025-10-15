@@ -1,16 +1,17 @@
 import axios from 'axios';
-import Constants from 'expo-constants';
 import { Book, GoogleBookInfo } from '../types';
 
-// Get the backend URL from environment
-const getBackendURL = () => {
-  // @ts-ignore - env variables are loaded from .env file
-  const backendURL = process.env.EXPO_PUBLIC_BACKEND_URL;
-  return backendURL || '';
+// For development, use the current origin
+// In production, this would be your actual backend URL
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return '';
 };
 
 const api = axios.create({
-  baseURL: `${getBackendURL()}/api`,
+  baseURL: `${getBaseURL()}/api`,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
