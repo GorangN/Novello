@@ -78,14 +78,95 @@ def book_helper(book) -> dict:
 async def search_book_by_isbn(isbn: str):
     """Fetch book information from Google Books API"""
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Try Google Books API first
+            headers = {
+                "User-Agent": "BookTracker/1.0"
+            }
             response = await client.get(
-                f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
+                f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}",
+                headers=headers
             )
+            
+            logging.info(f"Google Books API response status: {response.status_code}")
+            
+            if response.status_code == 403:
+                # Rate limited or blocked, try Open Library API
+                logging.info("Google Books API blocked, trying Open Library")
+                ol_response = await client.get(
+                    f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&jscmd=data&format=json"
+                )
+                ol_data = ol_response.json()
+                
+                if f"ISBN:{isbn}" not in ol_data or not ol_data[f"ISBN:{isbn}"]:
+                    raise HTTPException(status_code=404, detail="Book not found")
+                
+                book_data = ol_data[f"ISBN:{isbn}"]
+                
+                # Extract cover image and convert to base64 if available
+                cover_url = None
+                if "cover" in book_data and "large" in book_data["cover"]:
+                    cover_url = book_data["cover"]["large"]
+                elif "cover" in book_data and "medium" in book_data["cover"]:
+                    cover_url = book_data["cover"]["medium"]
+                
+                cover_base64 = None
+                if cover_url:
+                    try:
+                        img_response = await client.get(cover_url)
+                        if img_response.status_code == 200:
+                            import base64
+                            cover_base64 = f"data:image/jpeg;base64,{base64.b64encode(img_response.content).decode('utf-8')}"
+                    except Exception as e:
+                        logging.error(f"Error fetching cover image: {e}")
+                
+                return GoogleBookInfo(
+                    title=book_data.get("title", "Unknown Title"),
+                    author=", ".join([author["name"] for author in book_data.get("authors", [])]) or "Unknown Author",
+                    coverImage=cover_base64,
+                    totalPages=book_data.get("number_of_pages", 0),
+                    isbn=isbn
+                )
+            
             data = response.json()
             
             if "items" not in data or len(data["items"]) == 0:
-                raise HTTPException(status_code=404, detail="Book not found")
+                # Try Open Library as fallback
+                logging.info("Book not found in Google Books, trying Open Library")
+                ol_response = await client.get(
+                    f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&jscmd=data&format=json"
+                )
+                ol_data = ol_response.json()
+                
+                if f"ISBN:{isbn}" not in ol_data or not ol_data[f"ISBN:{isbn}"]:
+                    raise HTTPException(status_code=404, detail="Book not found")
+                
+                book_data = ol_data[f"ISBN:{isbn}"]
+                
+                # Extract cover image and convert to base64 if available
+                cover_url = None
+                if "cover" in book_data and "large" in book_data["cover"]:
+                    cover_url = book_data["cover"]["large"]
+                elif "cover" in book_data and "medium" in book_data["cover"]:
+                    cover_url = book_data["cover"]["medium"]
+                
+                cover_base64 = None
+                if cover_url:
+                    try:
+                        img_response = await client.get(cover_url)
+                        if img_response.status_code == 200:
+                            import base64
+                            cover_base64 = f"data:image/jpeg;base64,{base64.b64encode(img_response.content).decode('utf-8')}"
+                    except Exception as e:
+                        logging.error(f"Error fetching cover image: {e}")
+                
+                return GoogleBookInfo(
+                    title=book_data.get("title", "Unknown Title"),
+                    author=", ".join([author["name"] for author in book_data.get("authors", [])]) or "Unknown Author",
+                    coverImage=cover_base64,
+                    totalPages=book_data.get("number_of_pages", 0),
+                    isbn=isbn
+                )
             
             book_data = data["items"][0]["volumeInfo"]
             
