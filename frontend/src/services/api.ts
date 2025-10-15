@@ -2,10 +2,15 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { Book, GoogleBookInfo } from '../types';
 
-const API_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL || '';
+// Get the backend URL from environment
+const getBackendURL = () => {
+  // @ts-ignore - env variables are loaded from .env file
+  const backendURL = process.env.EXPO_PUBLIC_BACKEND_URL;
+  return backendURL || '';
+};
 
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: `${getBackendURL()}/api`,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
