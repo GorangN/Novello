@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import BookCard from '../components/BookCard';
-import AddBookModal from '../components/AddBookModal';
-import BookDetailsModal from '../components/BookDetailsModal';
-import { getBooksByStatus } from '../services/api';
-import { Book } from '../types';
+import BookCard from '../../src/components/BookCard';
+import AddBookModal from '../../src/components/AddBookModal';
+import BookDetailsModal from '../../src/components/BookDetailsModal';
+import { getBooksByStatus } from '../../src/services/api';
+import { Book } from '../../src/types';
 
 export default function ReadScreen() {
   const [books, setBooks] = useState<Book[]>([]);
