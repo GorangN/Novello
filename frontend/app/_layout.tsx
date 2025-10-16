@@ -31,6 +31,12 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
+        name="index"
+        options={{
+          href: null, // Hide from tabs
+        }}
+      />
+      <Tabs.Screen
         name="currently-reading"
         options={{
           title: 'Currently Reading',
