@@ -173,7 +173,6 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   content: {
     flex: 1,
@@ -191,12 +190,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#8E8E93',
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#000000',
     marginBottom: 24,
   },
   statsGrid: {
@@ -207,7 +204,6 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     margin: '1%',
@@ -224,12 +220,10 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#000000',
     marginTop: 8,
   },
   statLabel: {
     fontSize: 14,
-    color: '#8E8E93',
     marginTop: 4,
   },
   section: {
@@ -243,11 +237,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginLeft: 8,
   },
   pagesCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
@@ -260,15 +252,12 @@ const styles = StyleSheet.create({
   pagesNumber: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#4A90E2',
   },
   pagesLabel: {
     fontSize: 16,
-    color: '#8E8E93',
     marginTop: 8,
   },
   progressCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 20,
     shadowColor: '#000',
@@ -279,26 +268,22 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 12,
-    backgroundColor: '#E5E5EA',
     borderRadius: 6,
     overflow: 'hidden',
     marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4A90E2',
     borderRadius: 6,
   },
   progressText: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#4A90E2',
     textAlign: 'center',
   },
   monthRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
@@ -306,26 +291,22 @@ const styles = StyleSheet.create({
   monthLabel: {
     width: 80,
     fontSize: 14,
-    color: '#000000',
   },
   monthBar: {
     flex: 1,
     height: 8,
-    backgroundColor: '#E5E5EA',
     borderRadius: 4,
     overflow: 'hidden',
     marginHorizontal: 12,
   },
   monthBarFill: {
     height: '100%',
-    backgroundColor: '#4A90E2',
     borderRadius: 4,
   },
   monthCount: {
     width: 30,
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2',
     textAlign: 'right',
   },
 });
