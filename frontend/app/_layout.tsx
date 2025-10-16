@@ -17,9 +17,9 @@ function TabsContent() {
             backgroundColor: theme.surface,
             borderTopWidth: 1,
             borderTopColor: theme.border,
-            paddingBottom: 5,
+            paddingBottom: 8,
             paddingTop: 5,
-            height: 60,
+            height: 65,
           },
           headerStyle: {
             backgroundColor: theme.surface,
