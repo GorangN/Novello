@@ -91,29 +91,40 @@ export default function BookDetailsModal({
   };
 
   const handleDeleteBook = async () => {
-    Alert.alert(
-      'Delete Book',
-      'Are you sure you want to remove this book from your library?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await deleteBook(book.id);
-              Alert.alert('Success', 'Book removed from library');
-              onBookUpdated();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete book');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    // Use native confirm on web, Alert on mobile
+    const confirmed = Platform.OS === 'web' 
+      ? window.confirm('Are you sure you want to remove this book from your library?')
+      : await new Promise((resolve) => {
+          Alert.alert(
+            'Delete Book',
+            'Are you sure you want to remove this book from your library?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          );
+        });
+    
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await deleteBook(book.id);
+        if (Platform.OS === 'web') {
+          alert('Book removed from library');
+        } else {
+          Alert.alert('Success', 'Book removed from library');
+        }
+        onBookUpdated();
+      } catch (error) {
+        if (Platform.OS === 'web') {
+          alert('Failed to delete book');
+        } else {
+          Alert.alert('Error', 'Failed to delete book');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   return (
