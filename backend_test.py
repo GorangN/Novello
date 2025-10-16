@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Backend URL from the review request
-BASE_URL = "https://myreads-app.preview.emergentagent.com/api"
+BASE_URL = "https://bookfolio.preview.emergentagent.com/api"
 
 class BookTrackerTester:
     def __init__(self):
