@@ -66,28 +66,39 @@ export default function BookDetailsModal({
   };
 
   const handleMarkAsFinished = async () => {
-    Alert.alert(
-      'Mark as Finished',
-      'Mark this book as read?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Mark as Read',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await updateBook(book.id, { status: 'read' });
-              Alert.alert('Success', 'Book marked as read!');
-              onBookUpdated();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to update book');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm('Mark this book as read?')
+      : await new Promise((resolve) => {
+          Alert.alert(
+            'Mark as Finished',
+            'Mark this book as read?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Mark as Read', onPress: () => resolve(true) },
+            ]
+          );
+        });
+    
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await updateBook(book.id, { status: 'read' });
+        if (Platform.OS === 'web') {
+          alert('Book marked as read!');
+        } else {
+          Alert.alert('Success', 'Book marked as read!');
+        }
+        onBookUpdated();
+      } catch (error) {
+        if (Platform.OS === 'web') {
+          alert('Failed to update book');
+        } else {
+          Alert.alert('Error', 'Failed to update book');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleDeleteBook = async () => {
