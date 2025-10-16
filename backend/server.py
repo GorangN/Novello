@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Cookie, Depends
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -7,10 +7,11 @@ import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 import httpx
-
+from passlib.context import CryptContext
+import secrets
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -20,6 +21,9 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 # Create the main app without a prefix
 app = FastAPI()
 
@@ -28,6 +32,32 @@ api_router = APIRouter(prefix="/api")
 
 
 # Define Models
+class User(BaseModel):
+    id: str = Field(alias="_id")
+    email: str
+    name: str
+    picture: Optional[str] = None
+    password_hash: Optional[str] = None  # For email/password auth
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    class Config:
+        populate_by_name = True
+
+class UserSession(BaseModel):
+    user_id: str
+    session_token: str
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    name: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
 class Book(BaseModel):
     isbn: str
     title: str
@@ -35,10 +65,13 @@ class Book(BaseModel):
     coverImage: Optional[str] = None
     totalPages: int
     currentPage: int = 0
-    status: str = "want_to_read"  # read, currently_reading, want_to_read
+    status: str = "want_to_read"
     progress: float = 0.0
-    dateAdded: datetime = Field(default_factory=datetime.utcnow)
+    dateAdded: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     dateFinished: Optional[datetime] = None
+    notes: Optional[str] = None
+    rating: Optional[int] = None
+    user_id: Optional[str] = None  # Link books to users
 
 class BookResponse(Book):
     id: str
@@ -47,6 +80,8 @@ class BookUpdate(BaseModel):
     currentPage: Optional[int] = None
     status: Optional[str] = None
     dateFinished: Optional[datetime] = None
+    notes: Optional[str] = None
+    rating: Optional[int] = None
 
 class GoogleBookInfo(BaseModel):
     title: str
@@ -55,8 +90,17 @@ class GoogleBookInfo(BaseModel):
     totalPages: int
     isbn: str
 
+class ReadingStats(BaseModel):
+    total_books: int
+    books_read: int
+    books_reading: int
+    books_to_read: int
+    total_pages_read: int
+    average_progress: float
+    books_by_month: dict
 
-# Helper function to convert MongoDB doc to response
+
+# Helper functions
 def book_helper(book) -> dict:
     return {
         "id": str(book["_id"]),
@@ -69,238 +113,459 @@ def book_helper(book) -> dict:
         "status": book["status"],
         "progress": book["progress"],
         "dateAdded": book["dateAdded"],
-        "dateFinished": book.get("dateFinished")
+        "dateFinished": book.get("dateFinished"),
+        "notes": book.get("notes"),
+        "rating": book.get("rating"),
+        "user_id": book.get("user_id")
     }
 
+async def get_current_user(request: Request) -> Optional[User]:
+    """Get current user from session token in cookie or Authorization header"""
+    # Try cookie first
+    session_token = request.cookies.get("session_token")
+    
+    # Fallback to Authorization header
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header.replace("Bearer ", "")
+    
+    if not session_token:
+        return None
+    
+    # Find session
+    session = await db.user_sessions.find_one({"session_token": session_token})
+    if not session:
+        return None
+    
+    # Check expiry
+    if session["expires_at"] < datetime.now(timezone.utc):
+        await db.user_sessions.delete_one({"session_token": session_token})
+        return None
+    
+    # Get user
+    user_doc = await db.users.find_one({"_id": session["user_id"]})
+    if not user_doc:
+        return None
+    
+    user_doc["id"] = str(user_doc.pop("_id"))
+    return User(**user_doc)
 
-# Google Books API endpoint
+async def require_auth(request: Request) -> User:
+    """Require authentication"""
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
+
+
+# Auth endpoints
+@api_router.post("/auth/register")
+async def register(user_data: UserCreate, response: Response):
+    """Register with email/password"""
+    # Check if user exists
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create user
+    user_id = f"user_{secrets.token_urlsafe(16)}"
+    password_hash = pwd_context.hash(user_data.password)
+    
+    await db.users.insert_one({
+        "_id": user_id,
+        "email": user_data.email,
+        "name": user_data.name,
+        "password_hash": password_hash,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Create session
+    session_token = secrets.token_urlsafe(32)
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7*24*60*60,
+        path="/"
+    )
+    
+    return {"id": user_id, "email": user_data.email, "name": user_data.name}
+
+@api_router.post("/auth/login")
+async def login(credentials: UserLogin, response: Response):
+    """Login with email/password"""
+    user = await db.users.find_one({"email": credentials.email})
+    if not user or not user.get("password_hash"):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not pwd_context.verify(credentials.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Create session
+    session_token = secrets.token_urlsafe(32)
+    await db.user_sessions.insert_one({
+        "user_id": user["_id"],
+        "session_token": session_token,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7*24*60*60,
+        path="/"
+    )
+    
+    return {
+        "id": str(user["_id"]),
+        "email": user["email"],
+        "name": user["name"],
+        "picture": user.get("picture")
+    }
+
+@api_router.post("/auth/session")
+async def process_session(request: Request, response: Response):
+    """Process session_id from Emergent Auth"""
+    session_id = request.headers.get("X-Session-ID")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="No session_id provided")
+    
+    # Get session data from Emergent
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id}
+            )
+            resp.raise_for_status()
+            session_data = resp.json()
+        except Exception as e:
+            logging.error(f"Error fetching session data: {e}")
+            raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Check if user exists
+    user = await db.users.find_one({"email": session_data["email"]})
+    
+    if not user:
+        # Create new user
+        user_id = f"user_{secrets.token_urlsafe(16)}"
+        await db.users.insert_one({
+            "_id": user_id,
+            "email": session_data["email"],
+            "name": session_data["name"],
+            "picture": session_data.get("picture"),
+            "created_at": datetime.now(timezone.utc)
+        })
+    else:
+        user_id = user["_id"]
+    
+    # Create our session
+    our_session_token = secrets.token_urlsafe(32)
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": our_session_token,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=our_session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7*24*60*60,
+        path="/"
+    )
+    
+    return {
+        "id": str(user_id),
+        "email": session_data["email"],
+        "name": session_data["name"],
+        "picture": session_data.get("picture"),
+        "session_token": our_session_token
+    }
+
+@api_router.get("/auth/me")
+async def get_me(request: Request):
+    """Get current user"""
+    user = await require_auth(request)
+    return {"id": user.id, "email": user.email, "name": user.name, "picture": user.picture}
+
+@api_router.post("/auth/logout")
+async def logout(request: Request, response: Response):
+    """Logout"""
+    session_token = request.cookies.get("session_token")
+    if session_token:
+        await db.user_sessions.delete_one({"session_token": session_token})
+    
+    response.delete_cookie(key="session_token", path="/")
+    return {"message": "Logged out"}
+
+
+# Enhanced Book Search with multiple APIs
 @api_router.get("/books/search/{isbn}", response_model=GoogleBookInfo)
 async def search_book_by_isbn(isbn: str):
-    """Fetch book information from Google Books API"""
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            # Try Google Books API first
-            headers = {
-                "User-Agent": "BookTracker/1.0"
-            }
+    """Fetch book information from multiple APIs"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        headers = {"User-Agent": "BookTracker/1.0"}
+        
+        # Try Google Books API first
+        try:
             response = await client.get(
                 f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}",
                 headers=headers
             )
             
-            logging.info(f"Google Books API response status: {response.status_code}")
-            
-            if response.status_code == 403:
-                # Rate limited or blocked, try Open Library API
-                logging.info("Google Books API blocked, trying Open Library")
-                ol_response = await client.get(
-                    f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&jscmd=data&format=json"
-                )
-                ol_data = ol_response.json()
-                
-                if f"ISBN:{isbn}" not in ol_data or not ol_data[f"ISBN:{isbn}"]:
-                    raise HTTPException(status_code=404, detail="Book not found")
-                
-                book_data = ol_data[f"ISBN:{isbn}"]
-                
-                # Extract cover image and convert to base64 if available
-                cover_url = None
-                if "cover" in book_data and "large" in book_data["cover"]:
-                    cover_url = book_data["cover"]["large"]
-                elif "cover" in book_data and "medium" in book_data["cover"]:
-                    cover_url = book_data["cover"]["medium"]
-                
-                cover_base64 = None
-                if cover_url:
-                    try:
-                        img_response = await client.get(cover_url)
-                        if img_response.status_code == 200:
-                            import base64
-                            cover_base64 = f"data:image/jpeg;base64,{base64.b64encode(img_response.content).decode('utf-8')}"
-                    except Exception as e:
-                        logging.error(f"Error fetching cover image: {e}")
-                
-                return GoogleBookInfo(
-                    title=book_data.get("title", "Unknown Title"),
-                    author=", ".join([author["name"] for author in book_data.get("authors", [])]) or "Unknown Author",
-                    coverImage=cover_base64,
-                    totalPages=book_data.get("number_of_pages", 0),
-                    isbn=isbn
-                )
-            
-            data = response.json()
-            
-            if "items" not in data or len(data["items"]) == 0:
-                # Try Open Library as fallback
-                logging.info("Book not found in Google Books, trying Open Library")
-                ol_response = await client.get(
-                    f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&jscmd=data&format=json"
-                )
-                ol_data = ol_response.json()
-                
-                if f"ISBN:{isbn}" not in ol_data or not ol_data[f"ISBN:{isbn}"]:
-                    raise HTTPException(status_code=404, detail="Book not found")
-                
-                book_data = ol_data[f"ISBN:{isbn}"]
-                
-                # Extract cover image and convert to base64 if available
-                cover_url = None
-                if "cover" in book_data and "large" in book_data["cover"]:
-                    cover_url = book_data["cover"]["large"]
-                elif "cover" in book_data and "medium" in book_data["cover"]:
-                    cover_url = book_data["cover"]["medium"]
-                
-                cover_base64 = None
-                if cover_url:
-                    try:
-                        img_response = await client.get(cover_url)
-                        if img_response.status_code == 200:
-                            import base64
-                            cover_base64 = f"data:image/jpeg;base64,{base64.b64encode(img_response.content).decode('utf-8')}"
-                    except Exception as e:
-                        logging.error(f"Error fetching cover image: {e}")
-                
-                return GoogleBookInfo(
-                    title=book_data.get("title", "Unknown Title"),
-                    author=", ".join([author["name"] for author in book_data.get("authors", [])]) or "Unknown Author",
-                    coverImage=cover_base64,
-                    totalPages=book_data.get("number_of_pages", 0),
-                    isbn=isbn
-                )
-            
-            book_data = data["items"][0]["volumeInfo"]
-            
-            # Extract cover image and convert to base64 if available
-            cover_url = None
-            if "imageLinks" in book_data:
-                cover_url = book_data["imageLinks"].get("thumbnail") or book_data["imageLinks"].get("smallThumbnail")
-            
-            cover_base64 = None
-            if cover_url:
-                try:
-                    # Download the image
-                    cover_url = cover_url.replace("http://", "https://")  # Use HTTPS
-                    img_response = await client.get(cover_url)
-                    if img_response.status_code == 200:
-                        import base64
-                        cover_base64 = f"data:image/jpeg;base64,{base64.b64encode(img_response.content).decode('utf-8')}"
-                except Exception as e:
-                    logging.error(f"Error fetching cover image: {e}")
-            
-            return GoogleBookInfo(
-                title=book_data.get("title", "Unknown Title"),
-                author=", ".join(book_data.get("authors", ["Unknown Author"])),
-                coverImage=cover_base64,
-                totalPages=book_data.get("pageCount", 0),
-                isbn=isbn
+            if response.status_code == 200:
+                data = response.json()
+                if "items" in data and len(data["items"]) > 0:
+                    book_data = data["items"][0]["volumeInfo"]
+                    cover_url = None
+                    if "imageLinks" in book_data:
+                        cover_url = book_data["imageLinks"].get("thumbnail") or book_data["imageLinks"].get("smallThumbnail")
+                    
+                    if not cover_url:
+                        cover_url = f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg"
+                    
+                    return GoogleBookInfo(
+                        title=book_data.get("title", "Unknown Title"),
+                        author=", ".join(book_data.get("authors", ["Unknown Author"])),
+                        coverImage=cover_url,
+                        totalPages=book_data.get("pageCount", 0),
+                        isbn=isbn
+                    )
+        except Exception as e:
+            logging.error(f"Google Books API error: {e}")
+        
+        # Try Open Library
+        try:
+            ol_response = await client.get(
+                f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&jscmd=data&format=json"
             )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logging.error(f"Error fetching book data: {e}")
-        raise HTTPException(status_code=500, detail=f"Error fetching book data: {str(e)}")
+            ol_data = ol_response.json()
+            
+            if f"ISBN:{isbn}" in ol_data and ol_data[f"ISBN:{isbn}"]:
+                book_data = ol_data[f"ISBN:{isbn}"]
+                cover_url = f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg"
+                
+                return GoogleBookInfo(
+                    title=book_data.get("title", "Unknown Title"),
+                    author=", ".join([author["name"] for author in book_data.get("authors", [])]) or "Unknown Author",
+                    coverImage=cover_url,
+                    totalPages=book_data.get("number_of_pages", 0),
+                    isbn=isbn
+                )
+        except Exception as e:
+            logging.error(f"Open Library API error: {e}")
+        
+        # Try WorldCat (good for German books)
+        try:
+            worldcat_response = await client.get(
+                f"http://www.worldcat.org/isbn/{isbn}",
+                headers=headers,
+                follow_redirects=True
+            )
+            if worldcat_response.status_code == 200:
+                # WorldCat found it, use Open Library cover
+                return GoogleBookInfo(
+                    title="Book Found",
+                    author="Please add manually",
+                    coverImage=f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg",
+                    totalPages=0,
+                    isbn=isbn
+                )
+        except Exception as e:
+            logging.error(f"WorldCat API error: {e}")
+        
+        raise HTTPException(status_code=404, detail="Book not found in any database")
 
 
-# CRUD endpoints for books
+# Book endpoints (now with user context)
 @api_router.post("/books", response_model=BookResponse)
-async def add_book(book: Book):
-    """Add a new book to the library"""
+async def add_book(book: Book, request: Request):
+    """Add a new book"""
+    user = await get_current_user(request)
     book_dict = book.dict()
+    
+    if user:
+        book_dict["user_id"] = user.id
+    
     result = await db.books.insert_one(book_dict)
     book_dict["_id"] = result.inserted_id
     return book_helper(book_dict)
 
-
 @api_router.get("/books", response_model=List[BookResponse])
-async def get_all_books():
-    """Get all books"""
-    books = await db.books.find().to_list(1000)
+async def get_all_books(request: Request, search: Optional[str] = None):
+    """Get all books with optional search"""
+    user = await get_current_user(request)
+    
+    query = {}
+    if user:
+        query["user_id"] = user.id
+    
+    if search:
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"author": {"$regex": search, "$options": "i"}},
+            {"isbn": {"$regex": search, "$options": "i"}}
+        ]
+    
+    books = await db.books.find(query).to_list(1000)
     return [book_helper(book) for book in books]
-
 
 @api_router.get("/books/status/{status}", response_model=List[BookResponse])
-async def get_books_by_status(status: str):
-    """Get books by status (read, currently_reading, want_to_read)"""
-    books = await db.books.find({"status": status}).to_list(1000)
+async def get_books_by_status(status: str, request: Request):
+    """Get books by status"""
+    user = await get_current_user(request)
+    
+    query = {"status": status}
+    if user:
+        query["user_id"] = user.id
+    
+    books = await db.books.find(query).to_list(1000)
     return [book_helper(book) for book in books]
 
-
 @api_router.get("/books/{book_id}", response_model=BookResponse)
-async def get_book(book_id: str):
-    """Get a single book by ID"""
+async def get_book(book_id: str, request: Request):
+    """Get a single book"""
+    user = await get_current_user(request)
+    
     try:
-        book = await db.books.find_one({"_id": ObjectId(book_id)})
+        query = {"_id": ObjectId(book_id)}
+        if user:
+            query["user_id"] = user.id
+        
+        book = await db.books.find_one(query)
         if book:
             return book_helper(book)
         raise HTTPException(status_code=404, detail="Book not found")
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid book ID")
 
-
 @api_router.put("/books/{book_id}", response_model=BookResponse)
-async def update_book(book_id: str, book_update: BookUpdate):
-    """Update book progress and status"""
+async def update_book(book_id: str, book_update: BookUpdate, request: Request):
+    """Update book"""
+    user = await get_current_user(request)
+    
     try:
-        # Get the current book
-        book = await db.books.find_one({"_id": ObjectId(book_id)})
+        query = {"_id": ObjectId(book_id)}
+        if user:
+            query["user_id"] = user.id
+        
+        book = await db.books.find_one(query)
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         
         update_data = {}
         
-        # Update current page and calculate progress
         if book_update.currentPage is not None:
             update_data["currentPage"] = book_update.currentPage
-            total_pages = book["totalPages"]
-            if total_pages > 0:
-                progress = (book_update.currentPage / total_pages) * 100
+            if book["totalPages"] > 0:
+                progress = (book_update.currentPage / book["totalPages"]) * 100
                 update_data["progress"] = min(progress, 100)
         
-        # Update status
         if book_update.status is not None:
             update_data["status"] = book_update.status
-            # If marked as read, set current page to total pages and progress to 100
             if book_update.status == "read":
                 update_data["currentPage"] = book["totalPages"]
                 update_data["progress"] = 100
-                update_data["dateFinished"] = datetime.utcnow()
+                update_data["dateFinished"] = datetime.now(timezone.utc)
         
-        # Update date finished
         if book_update.dateFinished is not None:
             update_data["dateFinished"] = book_update.dateFinished
         
-        # Perform the update
-        await db.books.update_one(
-            {"_id": ObjectId(book_id)},
-            {"$set": update_data}
-        )
+        if book_update.notes is not None:
+            update_data["notes"] = book_update.notes
         
-        # Return updated book
-        updated_book = await db.books.find_one({"_id": ObjectId(book_id)})
+        if book_update.rating is not None:
+            update_data["rating"] = book_update.rating
+        
+        await db.books.update_one(query, {"$set": update_data})
+        updated_book = await db.books.find_one(query)
         return book_helper(updated_book)
-    
     except HTTPException:
         raise
-    except Exception as e:
-        logging.error(f"Error updating book: {e}")
-        raise HTTPException(status_code=400, detail="Invalid book ID or update data")
-
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid book ID")
 
 @api_router.delete("/books/{book_id}")
-async def delete_book(book_id: str):
-    """Delete a book from the library"""
+async def delete_book(book_id: str, request: Request):
+    """Delete a book"""
+    user = await get_current_user(request)
+    
     try:
-        result = await db.books.delete_one({"_id": ObjectId(book_id)})
+        query = {"_id": ObjectId(book_id)}
+        if user:
+            query["user_id"] = user.id
+        
+        result = await db.books.delete_one(query)
         if result.deleted_count == 1:
             return {"message": "Book deleted successfully"}
         raise HTTPException(status_code=404, detail="Book not found")
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid book ID")
 
+@api_router.get("/stats", response_model=ReadingStats)
+async def get_reading_stats(request: Request):
+    """Get reading statistics"""
+    user = await get_current_user(request)
+    
+    query = {}
+    if user:
+        query["user_id"] = user.id
+    
+    all_books = await db.books.find(query).to_list(1000)
+    
+    total_books = len(all_books)
+    books_read = len([b for b in all_books if b["status"] == "read"])
+    books_reading = len([b for b in all_books if b["status"] == "currently_reading"])
+    books_to_read = len([b for b in all_books if b["status"] == "want_to_read"])
+    
+    total_pages_read = sum(
+        b["currentPage"] for b in all_books if b["status"] in ["read", "currently_reading"]
+    )
+    
+    avg_progress = sum(b["progress"] for b in all_books) / total_books if total_books > 0 else 0
+    
+    # Books by month
+    books_by_month = {}
+    for book in all_books:
+        if book.get("dateFinished"):
+            month_key = book["dateFinished"].strftime("%Y-%m")
+            books_by_month[month_key] = books_by_month.get(month_key, 0) + 1
+    
+    return ReadingStats(
+        total_books=total_books,
+        books_read=books_read,
+        books_reading=books_reading,
+        books_to_read=books_to_read,
+        total_pages_read=total_pages_read,
+        average_progress=round(avg_progress, 1),
+        books_by_month=books_by_month
+    )
 
-# Include the router in the main app
+
+# Include router
 app.include_router(api_router)
 
 app.add_middleware(
@@ -311,7 +576,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
