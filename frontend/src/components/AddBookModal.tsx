@@ -40,17 +40,17 @@ export default function AddBookModal({
       return;
     }
     
-    if (!BarCodeScanner) {
-      Alert.alert('Scanner Not Available', 'Please enter ISBN manually');
-      return;
-    }
-    
-    const { status } = await BarCodeScanner.requestPermissionsAsync();
-    setHasPermission(status === 'granted');
-    if (status === 'granted') {
-      setShowScanner(true);
-    } else {
-      Alert.alert('Permission Denied', 'Camera permission is required to scan barcodes');
+    try {
+      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+      if (status === 'granted') {
+        setShowScanner(true);
+      } else {
+        Alert.alert('Permission Denied', 'Camera permission is required to scan barcodes. Please enable camera access in your device settings.');
+      }
+    } catch (error) {
+      console.error('Camera permission error:', error);
+      Alert.alert('Error', 'Unable to access camera. Please enter ISBN manually.');
     }
   };
 
