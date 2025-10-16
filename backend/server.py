@@ -403,13 +403,21 @@ async def search_book_by_isbn(isbn: str):
                     author = None
                     pages = None
                     
-                    # Title
+                    # Title - clean up the DNB format
                     if 'dc:title' in record_data:
                         title_data = record_data['dc:title']
                         if isinstance(title_data, list):
                             title = title_data[0]
                         else:
                             title = title_data
+                        
+                        # Clean up title: remove [Author] prefix and / separators
+                        if title:
+                            # Remove [Author] prefix like "[Rowling] ;"
+                            title = re.sub(r'^\[.*?\]\s*;\s*', '', title)
+                            # If there's a / separator, take the part before it (main title)
+                            if ' / ' in title:
+                                title = title.split(' / ')[0].strip()
                     
                     # Author/Creator
                     if 'dc:creator' in record_data:
