@@ -12,6 +12,7 @@ from bson import ObjectId
 import httpx
 from passlib.context import CryptContext
 import secrets
+import re
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
