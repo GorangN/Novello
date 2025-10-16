@@ -13,6 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { searchBookByISBN, addBook } from '../services/api';
 
 // Lazy load BarCodeScanner only when needed
@@ -32,6 +33,7 @@ export default function AddBookModal({
   onBookAdded,
   defaultStatus = 'want_to_read',
 }: AddBookModalProps) {
+  const { theme } = useTheme();
   const [showScanner, setShowScanner] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isbn, setIsbn] = useState('');
@@ -163,38 +165,39 @@ export default function AddBookModal({
         style={styles.modalContainer}
       >
         <TouchableOpacity
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: theme.modalBackdrop }]}
           activeOpacity={1}
           onPress={handleClose}
         />
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Add Book</Text>
+        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Add Book</Text>
             <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close" size={28} color="#000000" />
+              <Ionicons name="close" size={28} color={theme.text} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalBody}>
             <TouchableOpacity
-              style={styles.scanButton}
+              style={[styles.scanButton, { backgroundColor: theme.background, borderColor: theme.primary }]}
               onPress={requestCameraPermission}
               disabled={loading}
             >
-              <Ionicons name="barcode-outline" size={32} color="#4A90E2" />
-              <Text style={styles.scanButtonText}>Scan ISBN Barcode</Text>
+              <Ionicons name="barcode-outline" size={32} color={theme.primary} />
+              <Text style={[styles.scanButtonText, { color: theme.primary }]}>Scan ISBN Barcode</Text>
             </TouchableOpacity>
 
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+              <Text style={[styles.dividerText, { color: theme.textSecondary }]}>OR</Text>
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
             </View>
 
-            <Text style={styles.inputLabel}>Enter ISBN manually:</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>Enter ISBN manually:</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: theme.border, backgroundColor: theme.background, color: theme.text }]}
               placeholder="Enter ISBN (e.g., 9780545582889)"
+              placeholderTextColor={theme.textSecondary}
               value={isbn}
               onChangeText={setIsbn}
               keyboardType="numeric"
@@ -202,7 +205,7 @@ export default function AddBookModal({
             />
 
             <TouchableOpacity
-              style={[styles.addButton, loading && styles.addButtonDisabled]}
+              style={[styles.addButton, { backgroundColor: theme.primary }, loading && styles.addButtonDisabled]}
               onPress={() => fetchAndAddBook(isbn)}
               disabled={loading}
             >
@@ -226,10 +229,8 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 20,
@@ -242,12 +243,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
   },
   modalBody: {
     padding: 20,
@@ -256,17 +255,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5F5F5',
     padding: 20,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#4A90E2',
     borderStyle: 'dashed',
   },
   scanButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#4A90E2',
     marginLeft: 12,
   },
   divider: {
@@ -277,37 +273,31 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E5EA',
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: '#8E8E93',
     fontWeight: '500',
   },
   inputLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E5EA',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#F5F5F5',
   },
   addButton: {
-    backgroundColor: '#4A90E2',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
   },
   addButtonDisabled: {
-    backgroundColor: '#C7C7CC',
+    opacity: 0.5,
   },
   addButtonText: {
     color: '#FFFFFF',
