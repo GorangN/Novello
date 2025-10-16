@@ -7,20 +7,14 @@ import { Book, GoogleBookInfo } from '../types';
 const getBaseURL = () => {
   // For native apps (iOS/Android)
   if (Platform.OS !== 'web') {
-    // Use environment variable if available
-    const backendUrl = Constants.expoConfig?.extra?.backendUrl || 
-                      process.env.EXPO_PUBLIC_BACKEND_URL;
+    // Get the packager hostname from Expo constants
+    const packagerHostname = Constants.expoConfig?.hostUri;
     
-    if (backendUrl) {
-      return backendUrl;
-    }
-    
-    // Fallback: Use the tunnel URL for Expo Go
-    const manifest = Constants.expoConfig;
-    if (manifest?.hostUri) {
-      const parts = manifest.hostUri.split(':');
-      const host = parts[0];
-      return `https://${host}`;
+    if (packagerHostname) {
+      // Use the same host as the packager for API calls
+      // This ensures requests go through the Expo tunnel
+      const host = packagerHostname.split(':')[0];
+      return `http://${host}`;
     }
     
     // Last resort fallback
