@@ -20,6 +20,7 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
   const { user, logout } = useAuth();
+  const { theme, themeMode, toggleTheme } = useTheme();
   const router = useRouter();
 
   const handleLogout = async () => {
