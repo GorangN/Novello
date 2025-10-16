@@ -380,6 +380,7 @@ async def search_book_by_isbn(isbn: str):
         # Try DNB (Deutsche Nationalbibliothek) SRU API for German books
         try:
             import xmltodict
+            import re as regex_module
             
             # DNB SRU API endpoint
             dnb_sru_url = f"https://services.dnb.de/sru/dnb?version=1.1&operation=searchRetrieve&query=num%3D{isbn}&recordSchema=oai_dc&maximumRecords=1"
