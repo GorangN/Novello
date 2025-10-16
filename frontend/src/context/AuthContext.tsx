@@ -26,26 +26,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const getBaseURL = () => {
   // For native apps (iOS/Android)
   if (Platform.OS !== 'web') {
-    // Get the host from expo config (this will be the tunnel host)
-    const manifest = Constants.expoConfig;
-    if (manifest?.hostUri) {
-      // hostUri is like "bookfolio.localto.net:443" or "exp.host:80"
-      const parts = manifest.hostUri.split(':');
-      const host = parts[0];
-      const port = parts[1];
-      
-      // For Expo Go, use the same host but default http protocol
-      // The tunnel will handle routing to the backend
-      if (host && host.includes('localto.net')) {
-        // Use HTTP on the same host - the tunnel handles HTTPS
-        return `http://${host}`;
-      }
-      
-      // Fallback for other tunnel services
-      return `http://${host}:${port || '80'}`;
+    // Use the EXPO_PUBLIC_BACKEND_URL which is the preview URL
+    const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+    if (backendUrl) {
+      console.log('Using backend URL:', backendUrl);
+      return backendUrl;
     }
     
-    // Last resort fallback - shouldn't reach here
+    // Fallback
     return 'http://localhost:8001';
   }
   
