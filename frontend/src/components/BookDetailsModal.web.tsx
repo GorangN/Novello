@@ -108,7 +108,7 @@ export default function BookDetailsModal({
   return (
     <Modal
       visible={visible}
-      animationType=\"slide\"
+      animationType="slide"
       transparent
       onRequestClose={onClose}
     >
