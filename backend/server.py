@@ -376,32 +376,79 @@ async def search_book_by_isbn(isbn: str):
         except Exception as e:
             logging.error(f"Open Library API error: {e}")
         
-        # Try DNB (Deutsche Nationalbibliothek) for German books
+        # Try DNB (Deutsche Nationalbibliothek) SRU API for German books
         try:
-            dnb_response = await client.get(
-                f"https://portal.dnb.de/opac.htm?method=simpleSearch&query=isbn%3D{isbn}",
-                headers=headers,
-                follow_redirects=True
-            )
-            if dnb_response.status_code == 200 and "Suchergebnis" in dnb_response.text:
-                # Book exists in DNB, use Open Library for cover
-                return GoogleBookInfo(
-                    title=f"ISBN: {isbn}",
-                    author="Enter book details manually",
-                    coverImage=f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg",
-                    totalPages=200,  # Default reasonable page count
-                    isbn=isbn
-                )
+            import xmltodict
+            
+            # DNB SRU API endpoint
+            dnb_sru_url = f"https://services.dnb.de/sru/dnb?version=1.1&operation=searchRetrieve&query=num%3D{isbn}&recordSchema=oai_dc&maximumRecords=1"
+            
+            dnb_response = await client.get(dnb_sru_url, headers=headers, timeout=15.0)
+            
+            if dnb_response.status_code == 200:
+                # Parse XML response
+                dnb_data = xmltodict.parse(dnb_response.text)
+                
+                # Navigate through the XML structure
+                records = dnb_data.get('srw:searchRetrieveResponse', {}).get('srw:records', {})
+                
+                if records and records.get('srw:record'):
+                    record = records['srw:record']
+                    record_data = record.get('srw:recordData', {}).get('oai_dc:dc', {})
+                    
+                    # Extract book information
+                    title = None
+                    author = None
+                    pages = None
+                    
+                    # Title
+                    if 'dc:title' in record_data:
+                        title_data = record_data['dc:title']
+                        if isinstance(title_data, list):
+                            title = title_data[0]
+                        else:
+                            title = title_data
+                    
+                    # Author/Creator
+                    if 'dc:creator' in record_data:
+                        creator_data = record_data['dc:creator']
+                        if isinstance(creator_data, list):
+                            author = ', '.join(creator_data)
+                        else:
+                            author = creator_data
+                    
+                    # Try to get page count from format/extent
+                    if 'dc:format' in record_data:
+                        format_data = record_data['dc:format']
+                        format_list = format_data if isinstance(format_data, list) else [format_data]
+                        for fmt in format_list:
+                            if 'Seiten' in str(fmt) or 'S.' in str(fmt):
+                                # Extract number from strings like "320 Seiten" or "320 S."
+                                import re
+                                page_match = re.search(r'(\d+)\s*(?:Seiten|S\.)', str(fmt))
+                                if page_match:
+                                    pages = int(page_match.group(1))
+                                    break
+                    
+                    if title:
+                        logging.info(f"DNB found book: {title} by {author}")
+                        return GoogleBookInfo(
+                            title=title,
+                            author=author or "Unbekannter Autor",
+                            coverImage=f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg",
+                            totalPages=pages or 250,
+                            isbn=isbn
+                        )
         except Exception as e:
-            logging.error(f"DNB API error: {e}")
+            logging.error(f"DNB SRU API error: {e}")
         
         # Final fallback - return basic info with ISBN
         logging.info(f"Book with ISBN {isbn} not found in any API, returning basic info")
         return GoogleBookInfo(
-            title=f"ISBN: {isbn}",
-            author="Book found - Add details manually",
+            title=f"Book - {isbn}",
+            author="Unknown Author",
             coverImage=f"https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg",
-            totalPages=200,
+            totalPages=250,
             isbn=isbn
         )
 
