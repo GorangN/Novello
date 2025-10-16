@@ -67,10 +67,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = () => {
-    // Open Emergent OAuth
-    const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
-    const authUrl = `https://demobackend.emergentagent.com/auth/v1/env/oauth/authorize?redirect_uri=${redirectUri}`;
-    window.location.href = authUrl;
+    if (Platform.OS === 'web') {
+      // For now, show message that Google login will be enabled soon
+      alert('Google login is coming soon! Please use email/password registration for now.');
+    } else {
+      // On mobile, we can implement later
+      alert('Google login is coming soon! Please use email/password registration for now.');
+    }
   };
 
   return (
