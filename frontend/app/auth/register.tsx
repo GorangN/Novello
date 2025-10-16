@@ -46,10 +46,15 @@ export default function RegisterScreen() {
     setError('');
 
     try {
+      console.log('Attempting registration with:', { email, name });
       await register(email, password, name);
+      console.log('Registration successful!');
       router.replace('/currently-reading');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      console.error('Error response:', err.response);
+      const errorMessage = err.response?.data?.detail || err.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
