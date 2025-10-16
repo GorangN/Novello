@@ -106,6 +106,15 @@ function TabsContent() {
           }}
         />
       </Tabs>
+  );
+}
+
+export default function TabsLayout() {
+  return (
+    <AuthProvider>
+      <ThemeProvider>
+        <TabsContent />
+      </ThemeProvider>
     </AuthProvider>
   );
 }
