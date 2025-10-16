@@ -8,6 +8,9 @@
     "scheme": "myreads",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "extra": {
+      "backendUrl": "https://bookfolio.localto.net"
+    },
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
