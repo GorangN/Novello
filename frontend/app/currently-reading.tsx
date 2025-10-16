@@ -62,13 +62,13 @@ export default function CurrentlyReadingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['left', 'right']}>
       <View style={styles.content}>
         {books.length === 0 && !loading ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="book-outline" size={80} color="#C7C7CC" />
-            <Text style={styles.emptyText}>No books currently reading</Text>
-            <Text style={styles.emptySubtext}>Tap the + button to add a book</Text>
+            <Ionicons name="book-outline" size={80} color={theme.inactive} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No books currently reading</Text>
+            <Text style={[styles.emptySubtext, { color: theme.inactive }]}>Tap the + button to add a book</Text>
           </View>
         ) : (
           <FlatList
@@ -79,13 +79,13 @@ export default function CurrentlyReadingScreen() {
             )}
             contentContainerStyle={styles.listContent}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4A90E2" />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
             }
           />
         )}
 
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, { backgroundColor: theme.primary }]}
           onPress={() => setModalVisible(true)}
           activeOpacity={0.8}
         >
