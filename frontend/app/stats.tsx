@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../src/context/ThemeContext';
 import axios from 'axios';
 
 const API_URL = typeof window !== 'undefined' ? window.location.origin : '';
@@ -24,6 +25,7 @@ interface Stats {
 }
 
 export default function StatsScreen() {
+  const { theme } = useTheme();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,9 +55,9 @@ export default function StatsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       </SafeAreaView>
     );
@@ -63,101 +65,102 @@ export default function StatsScreen() {
 
   if (!stats) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Failed to load statistics</Text>
+          <Text style={[styles.errorText, { color: theme.textSecondary }]}>Failed to load statistics</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
       <ScrollView 
         style={styles.content}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4A90E2" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
-        <Text style={styles.title}>Reading Statistics</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Reading Statistics</Text>
 
         <View style={styles.statsGrid}>
-          <View style={[styles.statCard, styles.primaryCard]}>
-            <Ionicons name="library" size={32} color="#4A90E2" />
-            <Text style={styles.statNumber}>{stats.total_books}</Text>
-            <Text style={styles.statLabel}>Total Books</Text>
+          <View style={[styles.statCard, styles.primaryCard, { backgroundColor: theme.card }]}>
+            <Ionicons name="library" size={32} color={theme.primary} />
+            <Text style={[styles.statNumber, { color: theme.text }]}>{stats.total_books}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Total Books</Text>
           </View>
 
-          <View style={styles.statCard}>
-            <Ionicons name="checkmark-circle" size={32} color="#34C759" />
-            <Text style={styles.statNumber}>{stats.books_read}</Text>
-            <Text style={styles.statLabel}>Books Read</Text>
+          <View style={[styles.statCard, { backgroundColor: theme.card }]}>
+            <Ionicons name="checkmark-circle" size={32} color={theme.success} />
+            <Text style={[styles.statNumber, { color: theme.text }]}>{stats.books_read}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Books Read</Text>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: theme.card }]}>
             <Ionicons name="book" size={32} color="#FF9500" />
-            <Text style={styles.statNumber}>{stats.books_reading}</Text>
-            <Text style={styles.statLabel}>Reading Now</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{stats.books_reading}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Reading Now</Text>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: theme.card }]}>
             <Ionicons name="bookmark" size={32} color="#5856D6" />
-            <Text style={styles.statNumber}>{stats.books_to_read}</Text>
-            <Text style={styles.statLabel}>Want to Read</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{stats.books_to_read}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Want to Read</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="document-text" size={24} color="#4A90E2" />
-            <Text style={styles.sectionTitle}>Pages Read</Text>
+            <Ionicons name="document-text" size={24} color={theme.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Pages Read</Text>
           </View>
-          <View style={styles.pagesCard}>
-            <Text style={styles.pagesNumber}>{stats.total_pages_read.toLocaleString()}</Text>
-            <Text style={styles.pagesLabel}>Total Pages</Text>
+          <View style={[styles.pagesCard, { backgroundColor: theme.card }]}>
+            <Text style={[styles.pagesNumber, { color: theme.primary }]}>{stats.total_pages_read.toLocaleString()}</Text>
+            <Text style={[styles.pagesLabel, { color: theme.textSecondary }]}>Total Pages</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="trending-up" size={24} color="#4A90E2" />
-            <Text style={styles.sectionTitle}>Average Progress</Text>
+            <Ionicons name="trending-up" size={24} color={theme.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Average Progress</Text>
           </View>
-          <View style={styles.progressCard}>
-            <View style={styles.progressBar}>
+          <View style={[styles.progressCard, { backgroundColor: theme.card }]}>
+            <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
               <View
                 style={[
                   styles.progressFill,
-                  { width: `${stats.average_progress}%` },
+                  { width: `${stats.average_progress}%`, backgroundColor: theme.primary },
                 ]}
               />
             </View>
-            <Text style={styles.progressText}>{stats.average_progress}%</Text>
+            <Text style={[styles.progressText, { color: theme.primary }]}>{stats.average_progress}%</Text>
           </View>
         </View>
 
         {Object.keys(stats.books_by_month).length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="calendar" size={24} color="#4A90E2" />
-              <Text style={styles.sectionTitle}>Books Finished by Month</Text>
+              <Ionicons name="calendar" size={24} color={theme.primary} />
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Books Finished by Month</Text>
             </View>
             {Object.entries(stats.books_by_month)
               .sort(([a], [b]) => b.localeCompare(a))
               .map(([month, count]) => (
-                <View key={month} style={styles.monthRow}>
-                  <Text style={styles.monthLabel}>{month}</Text>
-                  <View style={styles.monthBar}>
+                <View key={month} style={[styles.monthRow, { backgroundColor: theme.card }]}>
+                  <Text style={[styles.monthLabel, { color: theme.text }]}>{month}</Text>
+                  <View style={[styles.monthBar, { backgroundColor: theme.border }]}>
                     <View
                       style={[
                         styles.monthBarFill,
                         {
                           width: `${(count / Math.max(...Object.values(stats.books_by_month))) * 100}%`,
+                          backgroundColor: theme.primary,
                         },
                       ]}
                     />
                   </View>
-                  <Text style={styles.monthCount}>{count}</Text>
+                  <Text style={[styles.monthCount, { color: theme.primary }]}>{count}</Text>
                 </View>
               ))}
           </View>
