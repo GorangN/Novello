@@ -1,12 +1,37 @@
 import axios from 'axios';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import { Book, GoogleBookInfo } from '../types';
 
-// For development, use the current origin
-// In production, this would be your actual backend URL
+// Get backend URL from environment or use appropriate default
 const getBaseURL = () => {
+  // For native apps (iOS/Android)
+  if (Platform.OS !== 'web') {
+    // Use environment variable if available
+    const backendUrl = Constants.expoConfig?.extra?.backendUrl || 
+                      process.env.EXPO_PUBLIC_BACKEND_URL;
+    
+    if (backendUrl) {
+      return backendUrl;
+    }
+    
+    // Fallback: Use the tunnel URL for Expo Go
+    const manifest = Constants.expoConfig;
+    if (manifest?.hostUri) {
+      const parts = manifest.hostUri.split(':');
+      const host = parts[0];
+      return `https://${host}`;
+    }
+    
+    // Last resort fallback
+    return 'http://localhost:8001';
+  }
+  
+  // For web
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
+  
   return '';
 };
 
