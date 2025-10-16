@@ -436,8 +436,7 @@ async def search_book_by_isbn(isbn: str):
                         for fmt in format_list:
                             if 'Seiten' in str(fmt) or 'S.' in str(fmt):
                                 # Extract number from strings like "320 Seiten" or "320 S."
-                                import re
-                                page_match = re.search(r'(\d+)\s*(?:Seiten|S\.)', str(fmt))
+                                page_match = regex_module.search(r'(\d+)\s*(?:Seiten|S\.)', str(fmt))
                                 if page_match:
                                     pages = int(page_match.group(1))
                                     break
