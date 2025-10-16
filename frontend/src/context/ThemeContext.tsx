@@ -99,7 +99,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeMode(themeMode === 'light' ? 'dark' : 'light');
   };
 
-  const theme = themeMode === 'light' ? lightTheme : darkTheme;
+  const theme: Theme = {
+    ...(themeMode === 'light' ? lightTheme : darkTheme),
+    themeMode,
+  };
 
   return (
     <ThemeContext.Provider value={{ theme, themeMode, toggleTheme, setThemeMode }}>
