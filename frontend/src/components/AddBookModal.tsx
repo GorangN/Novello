@@ -44,6 +44,16 @@ export default function AddBookModal({
   const [loading, setLoading] = useState(false);
 
   const requestCameraPermission = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available on Web', 'Barcode scanning is only available on iOS and Android devices. Please enter ISBN manually.');
+      return;
+    }
+    
+    if (!BarCodeScanner) {
+      Alert.alert('Scanner Not Available', 'Please enter ISBN manually');
+      return;
+    }
+    
     const { status } = await BarCodeScanner.requestPermissionsAsync();
     setHasPermission(status === 'granted');
     if (status === 'granted') {
