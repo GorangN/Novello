@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import ProfileModal from './ProfileModal';
 import { useRouter } from 'expo-router';
 
 export default function ProfileButton() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
 
@@ -28,7 +30,7 @@ export default function ProfileButton() {
         <Ionicons
           name={user ? 'person-circle' : 'person-circle-outline'}
           size={28}
-          color={user ? '#4A90E2' : '#8E8E93'}
+          color={user ? theme.primary : theme.textSecondary}
         />
       </TouchableOpacity>
 
