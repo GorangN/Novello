@@ -277,10 +277,8 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 20,
@@ -293,12 +291,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
   },
   modalBody: {
     padding: 20,
@@ -311,14 +307,12 @@ const styles = StyleSheet.create({
     width: 100,
     height: 150,
     borderRadius: 8,
-    backgroundColor: '#F5F5F5',
     marginRight: 16,
   },
   placeholderCoverLarge: {
     width: 100,
     height: 150,
     borderRadius: 8,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -330,12 +324,10 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 4,
   },
   bookAuthor: {
     fontSize: 14,
-    color: '#8E8E93',
     marginBottom: 12,
   },
   progressContainer: {
@@ -345,20 +337,17 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 10,
-    backgroundColor: '#E5E5EA',
     borderRadius: 5,
     overflow: 'hidden',
     marginRight: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4A90E2',
     borderRadius: 5,
   },
   progressText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2',
     minWidth: 45,
     textAlign: 'right',
   },
@@ -368,7 +357,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 12,
   },
   inputContainer: {
@@ -376,7 +364,6 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: '#8E8E93',
     marginBottom: 8,
   },
   pageInputRow: {
@@ -385,26 +372,22 @@ const styles = StyleSheet.create({
   },
   pageInput: {
     borderWidth: 1,
-    borderColor: '#E5E5EA',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#F5F5F5',
     width: 100,
   },
   totalPages: {
     fontSize: 16,
-    color: '#8E8E93',
     marginLeft: 12,
   },
   button: {
-    backgroundColor: '#4A90E2',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#C7C7CC',
+    opacity: 0.5,
   },
   buttonText: {
     color: '#FFFFFF',
@@ -414,20 +397,16 @@ const styles = StyleSheet.create({
   statusButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
     padding: 14,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
   },
   statusButtonActive: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    // Applied via inline style
   },
   statusButtonText: {
     fontSize: 16,
-    color: '#4A90E2',
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -437,15 +416,12 @@ const styles = StyleSheet.create({
   finishButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FFF4',
     padding: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#34C759',
   },
   finishButtonText: {
     fontSize: 16,
-    color: '#34C759',
     marginLeft: 8,
     fontWeight: '600',
   },
@@ -453,15 +429,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF5F5',
     padding: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FF3B30',
   },
   deleteButtonText: {
     fontSize: 16,
-    color: '#FF3B30',
     marginLeft: 8,
     fontWeight: '600',
   },
