@@ -389,12 +389,12 @@ async def search_book_by_isbn(isbn: str):
                 # Parse XML response
                 dnb_data = xmltodict.parse(dnb_response.text)
                 
-                # Navigate through the XML structure
-                records = dnb_data.get('srw:searchRetrieveResponse', {}).get('srw:records', {})
+                # Navigate through the XML structure (without namespace prefix)
+                records = dnb_data.get('searchRetrieveResponse', {}).get('records', {})
                 
-                if records and records.get('srw:record'):
-                    record = records['srw:record']
-                    record_data = record.get('srw:recordData', {}).get('oai_dc:dc', {})
+                if records and records.get('record'):
+                    record = records['record']
+                    record_data = record.get('recordData', {}).get('dc:dc', {})
                     
                     # Extract book information
                     title = None
