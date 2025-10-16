@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,11 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BarCodeScanner } from 'expo-barcode-scanner';
 import { searchBookByISBN, addBook } from '../services/api';
+
+// Lazy load BarCodeScanner only when needed
+let BarCodeScanner: any = null;
+let barcodeScannerLoaded = false;
 
 interface AddBookModalProps {
   visible: boolean;
