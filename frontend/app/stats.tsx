@@ -73,7 +73,12 @@ export default function StatsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView style={styles.content}>
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4A90E2" />
+        }
+      >
         <Text style={styles.title}>Reading Statistics</Text>
 
         <View style={styles.statsGrid}>
