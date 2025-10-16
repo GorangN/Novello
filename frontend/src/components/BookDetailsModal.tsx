@@ -152,40 +152,40 @@ export default function BookDetailsModal({
         style={styles.modalContainer}
       >
         <TouchableOpacity
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: theme.modalBackdrop }]}
           activeOpacity={1}
           onPress={onClose}
         />
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Book Details</Text>
+        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Book Details</Text>
             <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={28} color="#000000" />
+              <Ionicons name="close" size={28} color={theme.text} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalBody}>
             <View style={styles.bookHeader}>
               {book.coverImage ? (
-                <Image source={{ uri: book.coverImage }} style={styles.coverLarge} />
+                <Image source={{ uri: book.coverImage }} style={[styles.coverLarge, { backgroundColor: theme.border }]} />
               ) : (
-                <View style={styles.placeholderCoverLarge}>
-                  <Ionicons name="book" size={60} color="#C7C7CC" />
+                <View style={[styles.placeholderCoverLarge, { backgroundColor: theme.border }]}>
+                  <Ionicons name="book" size={60} color={theme.inactive} />
                 </View>
               )}
               <View style={styles.bookInfo}>
-                <Text style={styles.bookTitle}>{book.title}</Text>
-                <Text style={styles.bookAuthor}>{book.author}</Text>
+                <Text style={[styles.bookTitle, { color: theme.text }]}>{book.title}</Text>
+                <Text style={[styles.bookAuthor, { color: theme.textSecondary }]}>{book.author}</Text>
                 <View style={styles.progressContainer}>
-                  <View style={styles.progressBar}>
+                  <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
                     <View
                       style={[
                         styles.progressFill,
-                        { width: `${Math.min(book.progress, 100)}%` },
+                        { width: `${Math.min(book.progress, 100)}%`, backgroundColor: theme.primary },
                       ]}
                     />
                   </View>
-                  <Text style={styles.progressText}>
+                  <Text style={[styles.progressText, { color: theme.primary }]}>
                     {Math.round(book.progress)}%
                   </Text>
                 </View>
@@ -193,22 +193,23 @@ export default function BookDetailsModal({
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Update Progress</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Update Progress</Text>
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Current Page:</Text>
+                <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Current Page:</Text>
                 <View style={styles.pageInputRow}>
                   <TextInput
-                    style={styles.pageInput}
+                    style={[styles.pageInput, { borderColor: theme.border, backgroundColor: theme.background, color: theme.text }]}
                     value={currentPage}
                     onChangeText={setCurrentPage}
                     keyboardType="numeric"
                     placeholder="0"
+                    placeholderTextColor={theme.textSecondary}
                   />
-                  <Text style={styles.totalPages}>/ {book.totalPages}</Text>
+                  <Text style={[styles.totalPages, { color: theme.textSecondary }]}>/ {book.totalPages}</Text>
                 </View>
               </View>
               <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
+                style={[styles.button, { backgroundColor: theme.primary }, loading && styles.buttonDisabled]}
                 onPress={handleUpdateProgress}
                 disabled={loading}
               >
@@ -221,46 +222,46 @@ export default function BookDetailsModal({
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Change Status</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Change Status</Text>
               <TouchableOpacity
-                style={[styles.statusButton, book.status === 'want_to_read' && styles.statusButtonActive]}
+                style={[styles.statusButton, { backgroundColor: theme.background, borderColor: theme.border }, book.status === 'want_to_read' && { backgroundColor: theme.primary, borderColor: theme.primary }]}
                 onPress={() => handleChangeStatus('want_to_read')}
                 disabled={loading || book.status === 'want_to_read'}
               >
-                <Ionicons name="bookmark" size={20} color={book.status === 'want_to_read' ? '#FFFFFF' : '#4A90E2'} />
-                <Text style={[styles.statusButtonText, book.status === 'want_to_read' && styles.statusButtonTextActive]}>
+                <Ionicons name="bookmark" size={20} color={book.status === 'want_to_read' ? '#FFFFFF' : theme.primary} />
+                <Text style={[styles.statusButtonText, { color: theme.primary }, book.status === 'want_to_read' && styles.statusButtonTextActive]}>
                   Want to Read
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.statusButton, book.status === 'currently_reading' && styles.statusButtonActive]}
+                style={[styles.statusButton, { backgroundColor: theme.background, borderColor: theme.border }, book.status === 'currently_reading' && { backgroundColor: theme.primary, borderColor: theme.primary }]}
                 onPress={() => handleChangeStatus('currently_reading')}
                 disabled={loading || book.status === 'currently_reading'}
               >
-                <Ionicons name="book" size={20} color={book.status === 'currently_reading' ? '#FFFFFF' : '#4A90E2'} />
-                <Text style={[styles.statusButtonText, book.status === 'currently_reading' && styles.statusButtonTextActive]}>
+                <Ionicons name="book" size={20} color={book.status === 'currently_reading' ? '#FFFFFF' : theme.primary} />
+                <Text style={[styles.statusButtonText, { color: theme.primary }, book.status === 'currently_reading' && styles.statusButtonTextActive]}>
                   Currently Reading
                 </Text>
               </TouchableOpacity>
               {book.status !== 'read' && (
                 <TouchableOpacity
-                  style={styles.finishButton}
+                  style={[styles.finishButton, { backgroundColor: theme.themeMode === 'dark' ? theme.primaryLight : '#F0FFF4', borderColor: theme.success }]}
                   onPress={handleMarkAsFinished}
                   disabled={loading}
                 >
-                  <Ionicons name="checkmark-circle" size={20} color="#34C759" />
-                  <Text style={styles.finishButtonText}>Mark as Finished</Text>
+                  <Ionicons name="checkmark-circle" size={20} color={theme.success} />
+                  <Text style={[styles.finishButtonText, { color: theme.success }]}>Mark as Finished</Text>
                 </TouchableOpacity>
               )}
             </View>
 
             <TouchableOpacity
-              style={styles.deleteButton}
+              style={[styles.deleteButton, { backgroundColor: theme.themeMode === 'dark' ? '#2C1A1A' : '#FFF5F5', borderColor: theme.danger }]}
               onPress={handleDeleteBook}
               disabled={loading}
             >
-              <Ionicons name="trash" size={20} color="#FF3B30" />
-              <Text style={styles.deleteButtonText}>Remove from Library</Text>
+              <Ionicons name="trash" size={20} color={theme.danger} />
+              <Text style={[styles.deleteButtonText, { color: theme.danger }]}>Remove from Library</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
