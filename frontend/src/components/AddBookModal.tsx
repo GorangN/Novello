@@ -44,6 +44,13 @@ export default function AddBookModal({
     }
     
     try {
+      // Dynamically load BarCodeScanner only when needed
+      if (!barcodeScannerLoaded) {
+        const BarcodeModule = await import('expo-barcode-scanner');
+        BarCodeScanner = BarcodeModule.BarCodeScanner;
+        barcodeScannerLoaded = true;
+      }
+      
       const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === 'granted');
       if (status === 'granted') {
