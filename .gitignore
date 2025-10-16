@@ -61,7 +61,9 @@ web-build/
 android/
 ios/
 expo-env.d.ts
-metro-cache/
+.metro-cache/
+frontend/.expo/
+frontend/.metro-cache
 babel-cache/
 expo-debug.log
 .expo-notifications/
