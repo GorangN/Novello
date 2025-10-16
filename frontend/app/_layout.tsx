@@ -34,51 +34,76 @@ export default function TabsLayout() {
           headerRight: () => <ProfileButton />,
         }}
       >
-      <Tabs.Screen
-        name="index"
-        options={{
-          href: null, // Hide from tabs
-        }}
-      />
-      <Tabs.Screen
-        name="currently-reading"
-        options={{
-          title: 'Currently Reading',
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'book' : 'book-outline'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="want-to-read"
-        options={{
-          title: 'Want to Read',
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'bookmark' : 'bookmark-outline'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="read"
-        options={{
-          title: 'Read',
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-    </Tabs>
+        <Tabs.Screen
+          name="index"
+          options={{
+            href: null, // Hide from tabs
+          }}
+        />
+        <Tabs.Screen
+          name="currently-reading"
+          options={{
+            title: 'Currently Reading',
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons
+                name={focused ? 'book' : 'book-outline'}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="want-to-read"
+          options={{
+            title: 'Want to Read',
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons
+                name={focused ? 'bookmark' : 'bookmark-outline'}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="read"
+          options={{
+            title: 'Read',
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons
+                name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="stats"
+          options={{
+            href: null, // Hide from tabs, access via profile
+          }}
+        />
+        <Tabs.Screen
+          name="auth/login"
+          options={{
+            href: null, // Hide from tabs
+          }}
+        />
+        <Tabs.Screen
+          name="auth/register"
+          options={{
+            href: null, // Hide from tabs
+          }}
+        />
+        <Tabs.Screen
+          name="auth/callback"
+          options={{
+            href: null, // Hide from tabs
+          }}
+        />
+      </Tabs>
+    </AuthProvider>
   );
 }
