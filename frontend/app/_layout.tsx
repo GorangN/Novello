@@ -11,27 +11,27 @@ function TabsContent() {
   return (
     <Tabs
         screenOptions={{
-          tabBarActiveTintColor: '#4A90E2',
-          tabBarInactiveTintColor: '#8E8E93',
+          tabBarActiveTintColor: theme.primary,
+          tabBarInactiveTintColor: theme.textSecondary,
           tabBarStyle: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: theme.surface,
             borderTopWidth: 1,
-            borderTopColor: '#E5E5EA',
+            borderTopColor: theme.border,
             paddingBottom: 5,
             paddingTop: 5,
             height: 60,
           },
           headerStyle: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: theme.surface,
             elevation: 0,
             shadowOpacity: 0,
             borderBottomWidth: 1,
-            borderBottomColor: '#E5E5EA',
+            borderBottomColor: theme.border,
           },
           headerTitleStyle: {
             fontSize: 20,
             fontWeight: '600',
-            color: '#000000',
+            color: theme.text,
           },
           headerRight: () => <ProfileButton />,
         }}
