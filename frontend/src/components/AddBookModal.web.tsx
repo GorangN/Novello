@@ -42,22 +42,37 @@ export default function AddBookModal({
       // Fetch book info from API
       const bookInfo = await searchBookByISBN(isbnCode);
 
+      // Check if book info is incomplete (shows ISBN as title)
+      if (bookInfo.title.startsWith('ISBN:')) {
+        const shouldContinue = window.confirm(
+          `Book details not found automatically for ISBN ${isbnCode}.\\n\\n` +
+          `The book will be added with default values.\\n` +
+          `You can edit the title, author, and pages after adding.\\n\\n` +
+          `Continue?`
+        );
+        
+        if (!shouldContinue) {
+          setLoading(false);
+          return;
+        }
+      }
+
       // Add book to database with Open Library cover URL
       const coverImageUrl = `https://covers.openlibrary.org/b/isbn/${isbnCode}-L.jpg`;
       
       await addBook({
         isbn: bookInfo.isbn,
-        title: bookInfo.title,
-        author: bookInfo.author,
+        title: bookInfo.title.startsWith('ISBN:') ? `Book - ${isbnCode}` : bookInfo.title,
+        author: bookInfo.author.includes('manually') ? 'Unknown Author' : bookInfo.author,
         coverImage: coverImageUrl,
-        totalPages: bookInfo.totalPages,
+        totalPages: bookInfo.totalPages || 200,
         currentPage: 0,
         status: defaultStatus,
         progress: 0,
         dateAdded: new Date().toISOString(),
       });
 
-      alert('Book added to your library!');
+      alert('Book added to your library! You can edit the details by tapping on it.');
       setIsbn('');
       onBookAdded();
       onClose();
