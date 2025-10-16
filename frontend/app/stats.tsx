@@ -25,6 +25,7 @@ interface Stats {
 export default function StatsScreen() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -40,7 +41,13 @@ export default function StatsScreen() {
       console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchStats();
   };
 
   if (loading) {
