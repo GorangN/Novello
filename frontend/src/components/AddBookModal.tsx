@@ -46,12 +46,16 @@ export default function AddBookModal({
     }
     
     try {
-      // Dynamically load BarCodeScanner only when needed
-      if (!barcodeScannerLoaded) {
-        const BarcodeModule = await import('expo-barcode-scanner');
-        BarCodeScanner = BarcodeModule.BarCodeScanner;
-        barcodeScannerLoaded = true;
+      // Check if we're in Expo Go by trying to dynamically import
+      const BarcodeModule = await import('expo-barcode-scanner');
+      
+      // Check if the native module is available
+      if (!BarcodeModule.BarCodeScanner || !BarcodeModule.BarCodeScanner.requestPermissionsAsync) {
+        throw new Error('Barcode scanner not available');
       }
+      
+      BarCodeScanner = BarcodeModule.BarCodeScanner;
+      barcodeScannerLoaded = true;
       
       const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === 'granted');
@@ -62,7 +66,10 @@ export default function AddBookModal({
       }
     } catch (error) {
       console.error('Camera permission error:', error);
-      Alert.alert('Error', 'Unable to access camera. Please enter ISBN manually.');
+      Alert.alert(
+        'Scanner Not Available', 
+        'The barcode scanner is not available in Expo Go. Please use a development build or enter the ISBN manually.\n\nTo use the scanner, build the app with EAS Build or use "npx expo run:ios/android".'
+      );
     }
   };
 
