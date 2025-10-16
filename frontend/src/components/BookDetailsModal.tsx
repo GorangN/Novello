@@ -14,6 +14,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { Book } from '../types';
 import { updateBook, deleteBook } from '../services/api';
 
@@ -30,6 +31,7 @@ export default function BookDetailsModal({
   onClose,
   onBookUpdated,
 }: BookDetailsModalProps) {
+  const { theme } = useTheme();
   const [currentPage, setCurrentPage] = useState(book.currentPage.toString());
   const [loading, setLoading] = useState(false);
 
