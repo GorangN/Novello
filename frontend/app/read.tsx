@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../src/context/ThemeContext';
 import BookCard from '../src/components/BookCard';
 import AddBookModal from '../src/components/AddBookModal';
 import BookDetailsModal from '../src/components/BookDetailsModal';
@@ -17,6 +18,7 @@ import { getBooksByStatus } from '../src/services/api';
 import { Book } from '../src/types';
 
 export default function ReadScreen() {
+  const { theme } = useTheme();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -60,13 +62,13 @@ export default function ReadScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['left', 'right']}>
       <View style={styles.content}>
         {books.length === 0 && !loading ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="checkmark-circle-outline" size={80} color="#C7C7CC" />
-            <Text style={styles.emptyText}>No books read yet</Text>
-            <Text style={styles.emptySubtext}>Start reading and track your progress!</Text>
+            <Ionicons name="checkmark-circle-outline" size={80} color={theme.inactive} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No books read yet</Text>
+            <Text style={[styles.emptySubtext, { color: theme.inactive }]}>Start reading and track your progress!</Text>
           </View>
         ) : (
           <FlatList
@@ -77,13 +79,13 @@ export default function ReadScreen() {
             )}
             contentContainerStyle={styles.listContent}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4A90E2" />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
             }
           />
         )}
 
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, { backgroundColor: theme.primary }]}
           onPress={() => setModalVisible(true)}
           activeOpacity={0.8}
         >
@@ -113,7 +115,6 @@ export default function ReadScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   content: {
     flex: 1,
@@ -131,12 +132,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#8E8E93',
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#C7C7CC',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -147,7 +146,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#4A90E2',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
