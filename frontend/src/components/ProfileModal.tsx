@@ -49,29 +49,42 @@ export default function ProfileModal({ visible, onClose }: ProfileModalProps) {
         onPress={onClose}
       />
       <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
+        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+          <View style={[styles.header, { borderBottomColor: theme.border }]}>
             {user.picture ? (
               <Image source={{ uri: user.picture }} style={styles.avatar} />
             ) : (
-              <View style={styles.avatarPlaceholder}>
+              <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
                 <Ionicons name="person" size={40} color="#FFFFFF" />
               </View>
             )}
-            <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.email}>{user.email}</Text>
+            <Text style={[styles.name, { color: theme.text }]}>{user.name}</Text>
+            <Text style={[styles.email, { color: theme.textSecondary }]}>{user.email}</Text>
           </View>
 
           <View style={styles.menu}>
             <TouchableOpacity style={styles.menuItem} onPress={handleViewStats}>
-              <Ionicons name="stats-chart" size={24} color="#4A90E2" />
-              <Text style={styles.menuText}>Reading Statistics</Text>
-              <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+              <Ionicons name="stats-chart" size={24} color={theme.primary} />
+              <Text style={[styles.menuText, { color: theme.text }]}>Reading Statistics</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.inactive} />
             </TouchableOpacity>
 
+            <View style={[styles.menuItem, styles.themeItem]}>
+              <Ionicons name={themeMode === 'dark' ? 'moon' : 'sunny'} size={24} color={theme.primary} />
+              <Text style={[styles.menuText, { color: theme.text }]}>
+                {themeMode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+              </Text>
+              <Switch
+                value={themeMode === 'dark'}
+                onValueChange={toggleTheme}
+                trackColor={{ false: theme.inactive, true: theme.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
             <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-              <Ionicons name="log-out" size={24} color="#FF3B30" />
-              <Text style={[styles.menuText, styles.logoutText]}>Sign Out</Text>
+              <Ionicons name="log-out" size={24} color={theme.danger} />
+              <Text style={[styles.menuText, styles.logoutText, { color: theme.danger }]}>Sign Out</Text>
             </TouchableOpacity>
           </View>
         </View>
