@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
@@ -21,7 +22,39 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = typeof window !== 'undefined' ? window.location.origin : '';
+// Get backend URL from environment or use appropriate default
+const getBaseURL = () => {
+  // For native apps (iOS/Android)
+  if (Platform.OS !== 'web') {
+    // Use environment variable if available
+    const backendUrl = Constants.expoConfig?.extra?.backendUrl || 
+                      process.env.EXPO_PUBLIC_BACKEND_URL;
+    
+    if (backendUrl) {
+      return backendUrl;
+    }
+    
+    // Fallback: Use the tunnel URL for Expo Go
+    const manifest = Constants.expoConfig;
+    if (manifest?.hostUri) {
+      const parts = manifest.hostUri.split(':');
+      const host = parts[0];
+      return `https://${host}`;
+    }
+    
+    // Last resort fallback
+    return 'http://localhost:8001';
+  }
+  
+  // For web
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  
+  return '';
+};
+
+const API_URL = getBaseURL();
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
