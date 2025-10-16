@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../src/context/ThemeContext';
 import BookCard from '../src/components/BookCard';
 import AddBookModal from '../src/components/AddBookModal';
 import BookDetailsModal from '../src/components/BookDetailsModal';
@@ -17,6 +18,7 @@ import { getBooksByStatus } from '../src/services/api';
 import { Book } from '../src/types';
 
 export default function CurrentlyReadingScreen() {
+  const { theme } = useTheme();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
