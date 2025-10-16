@@ -387,14 +387,16 @@ async def search_book_by_isbn(isbn: str):
             
             if dnb_response.status_code == 200:
                 # Parse XML response
-                dnb_data = xmltodict.parse(dnb_response.text)
+                dnb_data = xmltodict.parse(dnb_response.text, process_namespaces=False)
                 
                 # Navigate through the XML structure (without namespace prefix)
                 records = dnb_data.get('searchRetrieveResponse', {}).get('records', {})
                 
+                logging.info(f"DNB records structure: {records is not None}")
+                
                 if records and records.get('record'):
                     record = records['record']
-                    record_data = record.get('recordData', {}).get('dc:dc', {})
+                    record_data = record.get('recordData', {}).get('dc', {})
                     
                     # Extract book information
                     title = None
