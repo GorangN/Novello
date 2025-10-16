@@ -7,17 +7,13 @@ import { Book, GoogleBookInfo } from '../types';
 const getBaseURL = () => {
   // For native apps (iOS/Android)
   if (Platform.OS !== 'web') {
-    // Get the packager hostname from Expo constants
-    const packagerHostname = Constants.expoConfig?.hostUri;
-    
-    if (packagerHostname) {
-      // Use the same host as the packager for API calls
-      // This ensures requests go through the Expo tunnel
-      const host = packagerHostname.split(':')[0];
-      return `http://${host}`;
+    // Use the EXPO_PUBLIC_BACKEND_URL which is the preview URL
+    const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+    if (backendUrl) {
+      return backendUrl;
     }
     
-    // Last resort fallback
+    // Fallback
     return 'http://localhost:8001';
   }
   
