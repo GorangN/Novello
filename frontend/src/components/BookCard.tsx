@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { Book } from '../types';
 
 interface BookCardProps {
@@ -9,45 +10,54 @@ interface BookCardProps {
 }
 
 export default function BookCard({ book, onPress }: BookCardProps) {
+  const { theme } = useTheme();
+  
+  // Generate cover image URL from ISBN if not available
+  const getCoverImageUrl = () => {
+    if (book.coverImage && book.coverImage.startsWith('data:image')) {
+      return book.coverImage;
+    }
+    // Use Open Library cover API as fallback
+    return `https://covers.openlibrary.org/b/isbn/${book.isbn}-M.jpg`;
+  };
+
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: theme.card }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
       <View style={styles.coverContainer}>
-        {book.coverImage ? (
-          <Image source={{ uri: book.coverImage }} style={styles.cover} />
-        ) : (
-          <View style={styles.placeholderCover}>
-            <Ionicons name="book" size={40} color="#C7C7CC" />
-          </View>
-        )}
+        <Image 
+          source={{ uri: getCoverImageUrl() }} 
+          style={styles.cover}
+          defaultSource={require('../../assets/images/icon.png')}
+        />
       </View>
 
       <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
           {book.title}
         </Text>
-        <Text style={styles.author} numberOfLines={1}>
+        <Text style={[styles.author, { color: theme.textSecondary }]} numberOfLines={1}>
           {book.author}
         </Text>
 
         <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
+          <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
             <View
               style={[
                 styles.progressFill,
-                { width: `${Math.min(book.progress, 100)}%` },
+                { width: `${Math.min(book.progress, 100)}%`, backgroundColor: theme.primary },
               ]}
             />
           </View>
-          <Text style={styles.progressText}>
+          <Text style={[styles.progressText, { color: theme.primary }]}>
             {Math.round(book.progress)}%
           </Text>
         </View>
 
-        <Text style={styles.pagesText}>
+        <Text style={[styles.pagesText, { color: theme.inactive }]}>
           {book.currentPage} / {book.totalPages} pages
         </Text>
       </View>

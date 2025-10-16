@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,17 +13,12 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { searchBookByISBN, addBook } from '../services/api';
 
-// Dynamically import BarCodeScanner only on native platforms
+// Lazy load BarCodeScanner only when needed
 let BarCodeScanner: any = null;
-if (Platform.OS !== 'web') {
-  try {
-    BarCodeScanner = require('expo-barcode-scanner').BarCodeScanner;
-  } catch (e) {
-    console.log('BarCodeScanner not available');
-  }
-}
+let barcodeScannerLoaded = false;
 
 interface AddBookModalProps {
   visible: boolean;
@@ -38,18 +33,43 @@ export default function AddBookModal({
   onBookAdded,
   defaultStatus = 'want_to_read',
 }: AddBookModalProps) {
+  const { theme } = useTheme();
   const [showScanner, setShowScanner] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isbn, setIsbn] = useState('');
   const [loading, setLoading] = useState(false);
 
   const requestCameraPermission = async () => {
-    const { status } = await BarCodeScanner.requestPermissionsAsync();
-    setHasPermission(status === 'granted');
-    if (status === 'granted') {
-      setShowScanner(true);
-    } else {
-      Alert.alert('Permission Denied', 'Camera permission is required to scan barcodes');
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available on Web', 'Barcode scanning is only available on iOS and Android devices. Please enter ISBN manually.');
+      return;
+    }
+    
+    try {
+      // Check if we're in Expo Go by trying to dynamically import
+      const BarcodeModule = await import('expo-barcode-scanner');
+      
+      // Check if the native module is available
+      if (!BarcodeModule.BarCodeScanner || !BarcodeModule.BarCodeScanner.requestPermissionsAsync) {
+        throw new Error('Barcode scanner not available');
+      }
+      
+      BarCodeScanner = BarcodeModule.BarCodeScanner;
+      barcodeScannerLoaded = true;
+      
+      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+      if (status === 'granted') {
+        setShowScanner(true);
+      } else {
+        Alert.alert('Permission Denied', 'Camera permission is required to scan barcodes. Please enable camera access in your device settings.');
+      }
+    } catch (error) {
+      console.error('Camera permission error:', error);
+      Alert.alert(
+        'Scanner Not Available', 
+        'The barcode scanner is not available in Expo Go. Please use a development build or enter the ISBN manually.\n\nTo use the scanner, build the app with EAS Build or use "npx expo run:ios/android".'
+      );
     }
   };
 
@@ -111,7 +131,12 @@ export default function AddBookModal({
           <BarCodeScanner
             onBarCodeScanned={handleBarCodeScanned}
             style={StyleSheet.absoluteFillObject}
-            barCodeTypes={[BarCodeScanner.Constants.BarCodeType.ean13]}
+            barCodeTypes={[
+              BarCodeScanner.Constants.BarCodeType.ean13,
+              BarCodeScanner.Constants.BarCodeType.ean8,
+              BarCodeScanner.Constants.BarCodeType.code128,
+              BarCodeScanner.Constants.BarCodeType.code39,
+            ]}
           />
           <View style={styles.scannerOverlay}>
             <View style={styles.scannerHeader}>
@@ -147,38 +172,39 @@ export default function AddBookModal({
         style={styles.modalContainer}
       >
         <TouchableOpacity
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: theme.modalBackdrop }]}
           activeOpacity={1}
           onPress={handleClose}
         />
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Add Book</Text>
+        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Add Book</Text>
             <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close" size={28} color="#000000" />
+              <Ionicons name="close" size={28} color={theme.text} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalBody}>
             <TouchableOpacity
-              style={styles.scanButton}
+              style={[styles.scanButton, { backgroundColor: theme.background, borderColor: theme.primary }]}
               onPress={requestCameraPermission}
               disabled={loading}
             >
-              <Ionicons name="barcode-outline" size={32} color="#4A90E2" />
-              <Text style={styles.scanButtonText}>Scan ISBN Barcode</Text>
+              <Ionicons name="barcode-outline" size={32} color={theme.primary} />
+              <Text style={[styles.scanButtonText, { color: theme.primary }]}>Scan ISBN Barcode</Text>
             </TouchableOpacity>
 
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+              <Text style={[styles.dividerText, { color: theme.textSecondary }]}>OR</Text>
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
             </View>
 
-            <Text style={styles.inputLabel}>Enter ISBN manually:</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>Enter ISBN manually:</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: theme.border, backgroundColor: theme.background, color: theme.text }]}
               placeholder="Enter ISBN (e.g., 9780545582889)"
+              placeholderTextColor={theme.textSecondary}
               value={isbn}
               onChangeText={setIsbn}
               keyboardType="numeric"
@@ -186,7 +212,7 @@ export default function AddBookModal({
             />
 
             <TouchableOpacity
-              style={[styles.addButton, loading && styles.addButtonDisabled]}
+              style={[styles.addButton, { backgroundColor: theme.primary }, loading && styles.addButtonDisabled]}
               onPress={() => fetchAndAddBook(isbn)}
               disabled={loading}
             >
@@ -210,10 +236,8 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 20,
@@ -226,12 +250,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
   },
   modalBody: {
     padding: 20,
@@ -240,17 +262,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5F5F5',
     padding: 20,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#4A90E2',
     borderStyle: 'dashed',
   },
   scanButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#4A90E2',
     marginLeft: 12,
   },
   divider: {
@@ -261,37 +280,31 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E5EA',
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: '#8E8E93',
     fontWeight: '500',
   },
   inputLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E5EA',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#F5F5F5',
   },
   addButton: {
-    backgroundColor: '#4A90E2',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
   },
   addButtonDisabled: {
-    backgroundColor: '#C7C7CC',
+    opacity: 0.5,
   },
   addButtonText: {
     color: '#FFFFFF',

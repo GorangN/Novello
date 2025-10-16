@@ -1,13 +1,16 @@
 {
   "expo": {
-    "name": "MyReads - Book Tracker",
-    "slug": "myreads",
+    "name": "Novello",
+    "slug": "novello",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myreads",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "extra": {
+      "backendUrl": "https://bookfolio.localto.net"
+    },
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -47,7 +50,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#FFFFFF"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

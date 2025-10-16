@@ -1,0 +1,157 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  RefreshControl,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../src/context/ThemeContext';
+import BookCard from '../src/components/BookCard';
+import AddBookModal from '../src/components/AddBookModal';
+import BookDetailsModal from '../src/components/BookDetailsModal';
+import { getBooksByStatus } from '../src/services/api';
+import { Book } from '../src/types';
+
+export default function ReadScreen() {
+  const { theme } = useTheme();
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [detailsModalVisible, setDetailsModalVisible] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+
+  const fetchBooks = async () => {
+    try {
+      const data = await getBooksByStatus('read');
+      setBooks(data);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load books');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchBooks();
+  }, []);
+
+  const handleBookPress = (book: Book) => {
+    setSelectedBook(book);
+    setDetailsModalVisible(true);
+  };
+
+  const handleBookAdded = () => {
+    fetchBooks();
+  };
+
+  const handleBookUpdated = () => {
+    fetchBooks();
+    setDetailsModalVisible(false);
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['left', 'right']}>
+      <View style={styles.content}>
+        {books.length === 0 && !loading ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="checkmark-circle-outline" size={80} color={theme.inactive} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No books read yet</Text>
+            <Text style={[styles.emptySubtext, { color: theme.inactive }]}>Start reading and track your progress!</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={books}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <BookCard book={item} onPress={() => handleBookPress(item)} />
+            )}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+            }
+          />
+        )}
+
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: theme.primary }]}
+          onPress={() => setModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={32} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+
+      <AddBookModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onBookAdded={handleBookAdded}
+        defaultStatus="read"
+      />
+
+      {selectedBook && (
+        <BookDetailsModal
+          visible={detailsModalVisible}
+          book={selectedBook}
+          onClose={() => setDetailsModalVisible(false)}
+          onBookUpdated={handleBookUpdated}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 80,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+});

@@ -14,6 +14,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { Book } from '../types';
 import { updateBook, deleteBook } from '../services/api';
 
@@ -30,6 +31,7 @@ export default function BookDetailsModal({
   onClose,
   onBookUpdated,
 }: BookDetailsModalProps) {
+  const { theme } = useTheme();
   const [currentPage, setCurrentPage] = useState(book.currentPage.toString());
   const [loading, setLoading] = useState(false);
 
@@ -66,54 +68,76 @@ export default function BookDetailsModal({
   };
 
   const handleMarkAsFinished = async () => {
-    Alert.alert(
-      'Mark as Finished',
-      'Mark this book as read?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Mark as Read',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await updateBook(book.id, { status: 'read' });
-              Alert.alert('Success', 'Book marked as read!');
-              onBookUpdated();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to update book');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm('Mark this book as read?')
+      : await new Promise((resolve) => {
+          Alert.alert(
+            'Mark as Finished',
+            'Mark this book as read?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Mark as Read', onPress: () => resolve(true) },
+            ]
+          );
+        });
+    
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await updateBook(book.id, { status: 'read' });
+        if (Platform.OS === 'web') {
+          alert('Book marked as read!');
+        } else {
+          Alert.alert('Success', 'Book marked as read!');
+        }
+        onBookUpdated();
+      } catch (error) {
+        if (Platform.OS === 'web') {
+          alert('Failed to update book');
+        } else {
+          Alert.alert('Error', 'Failed to update book');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleDeleteBook = async () => {
-    Alert.alert(
-      'Delete Book',
-      'Are you sure you want to remove this book from your library?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await deleteBook(book.id);
-              Alert.alert('Success', 'Book removed from library');
-              onBookUpdated();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete book');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    // Use native confirm on web, Alert on mobile
+    const confirmed = Platform.OS === 'web' 
+      ? window.confirm('Are you sure you want to remove this book from your library?')
+      : await new Promise((resolve) => {
+          Alert.alert(
+            'Delete Book',
+            'Are you sure you want to remove this book from your library?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          );
+        });
+    
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await deleteBook(book.id);
+        if (Platform.OS === 'web') {
+          alert('Book removed from library');
+        } else {
+          Alert.alert('Success', 'Book removed from library');
+        }
+        onBookUpdated();
+      } catch (error) {
+        if (Platform.OS === 'web') {
+          alert('Failed to delete book');
+        } else {
+          Alert.alert('Error', 'Failed to delete book');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   return (
@@ -128,40 +152,40 @@ export default function BookDetailsModal({
         style={styles.modalContainer}
       >
         <TouchableOpacity
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: theme.modalBackdrop }]}
           activeOpacity={1}
           onPress={onClose}
         />
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Book Details</Text>
+        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Book Details</Text>
             <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={28} color="#000000" />
+              <Ionicons name="close" size={28} color={theme.text} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalBody}>
             <View style={styles.bookHeader}>
               {book.coverImage ? (
-                <Image source={{ uri: book.coverImage }} style={styles.coverLarge} />
+                <Image source={{ uri: book.coverImage }} style={[styles.coverLarge, { backgroundColor: theme.border }]} />
               ) : (
-                <View style={styles.placeholderCoverLarge}>
-                  <Ionicons name="book" size={60} color="#C7C7CC" />
+                <View style={[styles.placeholderCoverLarge, { backgroundColor: theme.border }]}>
+                  <Ionicons name="book" size={60} color={theme.inactive} />
                 </View>
               )}
               <View style={styles.bookInfo}>
-                <Text style={styles.bookTitle}>{book.title}</Text>
-                <Text style={styles.bookAuthor}>{book.author}</Text>
+                <Text style={[styles.bookTitle, { color: theme.text }]}>{book.title}</Text>
+                <Text style={[styles.bookAuthor, { color: theme.textSecondary }]}>{book.author}</Text>
                 <View style={styles.progressContainer}>
-                  <View style={styles.progressBar}>
+                  <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
                     <View
                       style={[
                         styles.progressFill,
-                        { width: `${Math.min(book.progress, 100)}%` },
+                        { width: `${Math.min(book.progress, 100)}%`, backgroundColor: theme.primary },
                       ]}
                     />
                   </View>
-                  <Text style={styles.progressText}>
+                  <Text style={[styles.progressText, { color: theme.primary }]}>
                     {Math.round(book.progress)}%
                   </Text>
                 </View>
@@ -169,22 +193,23 @@ export default function BookDetailsModal({
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Update Progress</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Update Progress</Text>
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Current Page:</Text>
+                <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Current Page:</Text>
                 <View style={styles.pageInputRow}>
                   <TextInput
-                    style={styles.pageInput}
+                    style={[styles.pageInput, { borderColor: theme.border, backgroundColor: theme.background, color: theme.text }]}
                     value={currentPage}
                     onChangeText={setCurrentPage}
                     keyboardType="numeric"
                     placeholder="0"
+                    placeholderTextColor={theme.textSecondary}
                   />
-                  <Text style={styles.totalPages}>/ {book.totalPages}</Text>
+                  <Text style={[styles.totalPages, { color: theme.textSecondary }]}>/ {book.totalPages}</Text>
                 </View>
               </View>
               <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
+                style={[styles.button, { backgroundColor: theme.primary }, loading && styles.buttonDisabled]}
                 onPress={handleUpdateProgress}
                 disabled={loading}
               >
@@ -197,46 +222,46 @@ export default function BookDetailsModal({
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Change Status</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Change Status</Text>
               <TouchableOpacity
-                style={[styles.statusButton, book.status === 'want_to_read' && styles.statusButtonActive]}
+                style={[styles.statusButton, { backgroundColor: theme.background, borderColor: theme.border }, book.status === 'want_to_read' && { backgroundColor: theme.primary, borderColor: theme.primary }]}
                 onPress={() => handleChangeStatus('want_to_read')}
                 disabled={loading || book.status === 'want_to_read'}
               >
-                <Ionicons name="bookmark" size={20} color={book.status === 'want_to_read' ? '#FFFFFF' : '#4A90E2'} />
-                <Text style={[styles.statusButtonText, book.status === 'want_to_read' && styles.statusButtonTextActive]}>
+                <Ionicons name="bookmark" size={20} color={book.status === 'want_to_read' ? '#FFFFFF' : theme.primary} />
+                <Text style={[styles.statusButtonText, { color: theme.primary }, book.status === 'want_to_read' && styles.statusButtonTextActive]}>
                   Want to Read
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.statusButton, book.status === 'currently_reading' && styles.statusButtonActive]}
+                style={[styles.statusButton, { backgroundColor: theme.background, borderColor: theme.border }, book.status === 'currently_reading' && { backgroundColor: theme.primary, borderColor: theme.primary }]}
                 onPress={() => handleChangeStatus('currently_reading')}
                 disabled={loading || book.status === 'currently_reading'}
               >
-                <Ionicons name="book" size={20} color={book.status === 'currently_reading' ? '#FFFFFF' : '#4A90E2'} />
-                <Text style={[styles.statusButtonText, book.status === 'currently_reading' && styles.statusButtonTextActive]}>
+                <Ionicons name="book" size={20} color={book.status === 'currently_reading' ? '#FFFFFF' : theme.primary} />
+                <Text style={[styles.statusButtonText, { color: theme.primary }, book.status === 'currently_reading' && styles.statusButtonTextActive]}>
                   Currently Reading
                 </Text>
               </TouchableOpacity>
               {book.status !== 'read' && (
                 <TouchableOpacity
-                  style={styles.finishButton}
+                  style={[styles.finishButton, { backgroundColor: theme.themeMode === 'dark' ? theme.primaryLight : '#F0FFF4', borderColor: theme.success }]}
                   onPress={handleMarkAsFinished}
                   disabled={loading}
                 >
-                  <Ionicons name="checkmark-circle" size={20} color="#34C759" />
-                  <Text style={styles.finishButtonText}>Mark as Finished</Text>
+                  <Ionicons name="checkmark-circle" size={20} color={theme.success} />
+                  <Text style={[styles.finishButtonText, { color: theme.success }]}>Mark as Finished</Text>
                 </TouchableOpacity>
               )}
             </View>
 
             <TouchableOpacity
-              style={styles.deleteButton}
+              style={[styles.deleteButton, { backgroundColor: theme.themeMode === 'dark' ? '#2C1A1A' : '#FFF5F5', borderColor: theme.danger }]}
               onPress={handleDeleteBook}
               disabled={loading}
             >
-              <Ionicons name="trash" size={20} color="#FF3B30" />
-              <Text style={styles.deleteButtonText}>Remove from Library</Text>
+              <Ionicons name="trash" size={20} color={theme.danger} />
+              <Text style={[styles.deleteButtonText, { color: theme.danger }]}>Remove from Library</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -252,10 +277,8 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 20,
@@ -268,12 +291,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
   },
   modalBody: {
     padding: 20,
@@ -286,14 +307,12 @@ const styles = StyleSheet.create({
     width: 100,
     height: 150,
     borderRadius: 8,
-    backgroundColor: '#F5F5F5',
     marginRight: 16,
   },
   placeholderCoverLarge: {
     width: 100,
     height: 150,
     borderRadius: 8,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -305,12 +324,10 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 4,
   },
   bookAuthor: {
     fontSize: 14,
-    color: '#8E8E93',
     marginBottom: 12,
   },
   progressContainer: {
@@ -320,20 +337,17 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 10,
-    backgroundColor: '#E5E5EA',
     borderRadius: 5,
     overflow: 'hidden',
     marginRight: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4A90E2',
     borderRadius: 5,
   },
   progressText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2',
     minWidth: 45,
     textAlign: 'right',
   },
@@ -343,7 +357,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 12,
   },
   inputContainer: {
@@ -351,7 +364,6 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: '#8E8E93',
     marginBottom: 8,
   },
   pageInputRow: {
@@ -360,26 +372,22 @@ const styles = StyleSheet.create({
   },
   pageInput: {
     borderWidth: 1,
-    borderColor: '#E5E5EA',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#F5F5F5',
     width: 100,
   },
   totalPages: {
     fontSize: 16,
-    color: '#8E8E93',
     marginLeft: 12,
   },
   button: {
-    backgroundColor: '#4A90E2',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#C7C7CC',
+    opacity: 0.5,
   },
   buttonText: {
     color: '#FFFFFF',
@@ -389,20 +397,16 @@ const styles = StyleSheet.create({
   statusButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
     padding: 14,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
   },
   statusButtonActive: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    // Applied via inline style
   },
   statusButtonText: {
     fontSize: 16,
-    color: '#4A90E2',
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -412,15 +416,12 @@ const styles = StyleSheet.create({
   finishButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FFF4',
     padding: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#34C759',
   },
   finishButtonText: {
     fontSize: 16,
-    color: '#34C759',
     marginLeft: 8,
     fontWeight: '600',
   },
@@ -428,15 +429,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF5F5',
     padding: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FF3B30',
   },
   deleteButtonText: {
     fontSize: 16,
-    color: '#FF3B30',
     marginLeft: 8,
     fontWeight: '600',
   },
