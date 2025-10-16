@@ -18,6 +18,7 @@ interface Theme {
   inactive: string;
   shadow: string;
   modalBackdrop: string;
+  themeMode: ThemeMode;
 }
 
 const lightTheme: Theme = {
