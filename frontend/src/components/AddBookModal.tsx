@@ -112,7 +112,12 @@ export default function AddBookModal({
           <BarCodeScanner
             onBarCodeScanned={handleBarCodeScanned}
             style={StyleSheet.absoluteFillObject}
-            barCodeTypes={[BarCodeScanner.Constants.BarCodeType.ean13]}
+            barCodeTypes={[
+              BarCodeScanner.Constants.BarCodeType.ean13,
+              BarCodeScanner.Constants.BarCodeType.ean8,
+              BarCodeScanner.Constants.BarCodeType.code128,
+              BarCodeScanner.Constants.BarCodeType.code39,
+            ]}
           />
           <View style={styles.scannerOverlay}>
             <View style={styles.scannerHeader}>
