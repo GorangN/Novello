@@ -105,7 +105,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
@@ -119,7 +118,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
   },
   avatar: {
     width: 80,
@@ -131,7 +129,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4A90E2',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -139,12 +136,10 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 4,
   },
   email: {
     fontSize: 14,
-    color: '#8E8E93',
   },
   menu: {
     padding: 8,
@@ -155,13 +150,15 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
   },
+  themeItem: {
+    justifyContent: 'space-between',
+  },
   menuText: {
     flex: 1,
     fontSize: 16,
-    color: '#000000',
     marginLeft: 12,
   },
   logoutText: {
-    color: '#FF3B30',
+    // color applied dynamically
   },
 });
