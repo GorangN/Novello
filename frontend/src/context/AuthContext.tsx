@@ -87,12 +87,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (email: string, password: string, name: string) => {
-    const response = await axios.post(
-      `${API_URL}/api/auth/register`,
-      { email, password, name },
-      { withCredentials: true }
-    );
-    setUser(response.data);
+    try {
+      console.log('AuthContext: Attempting registration to:', `${API_URL}/api/auth/register`);
+      const response = await axios.post(
+        `${API_URL}/api/auth/register`,
+        { email, password, name },
+        { withCredentials: true }
+      );
+      console.log('AuthContext: Registration response:', response.data);
+      setUser(response.data);
+    } catch (error: any) {
+      console.error('AuthContext: Registration error:', error);
+      console.error('AuthContext: Error details:', error.response?.data);
+      throw error;
+    }
   };
 
   const logout = async () => {
