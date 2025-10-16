@@ -9,6 +9,15 @@ interface BookCardProps {
 }
 
 export default function BookCard({ book, onPress }: BookCardProps) {
+  // Generate cover image URL from ISBN if not available
+  const getCoverImageUrl = () => {
+    if (book.coverImage && book.coverImage.startsWith('data:image')) {
+      return book.coverImage;
+    }
+    // Use Open Library cover API as fallback
+    return `https://covers.openlibrary.org/b/isbn/${book.isbn}-M.jpg`;
+  };
+
   return (
     <TouchableOpacity
       style={styles.card}
@@ -16,13 +25,11 @@ export default function BookCard({ book, onPress }: BookCardProps) {
       activeOpacity={0.7}
     >
       <View style={styles.coverContainer}>
-        {book.coverImage ? (
-          <Image source={{ uri: book.coverImage }} style={styles.cover} />
-        ) : (
-          <View style={styles.placeholderCover}>
-            <Ionicons name="book" size={40} color="#C7C7CC" />
-          </View>
-        )}
+        <Image 
+          source={{ uri: getCoverImageUrl() }} 
+          style={styles.cover}
+          defaultSource={require('../../assets/images/icon.png')}
+        />
       </View>
 
       <View style={styles.infoContainer}>

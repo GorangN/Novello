@@ -33,7 +33,7 @@ export default function AddBookModal({
 
   const fetchAndAddBook = async (isbnCode: string) => {
     if (!isbnCode.trim()) {
-      Alert.alert('Error', 'Please enter an ISBN');
+      alert('Please enter an ISBN');
       return;
     }
 
@@ -42,12 +42,14 @@ export default function AddBookModal({
       // Fetch book info from API
       const bookInfo = await searchBookByISBN(isbnCode);
 
-      // Add book to database
+      // Add book to database with Open Library cover URL
+      const coverImageUrl = `https://covers.openlibrary.org/b/isbn/${isbnCode}-L.jpg`;
+      
       await addBook({
         isbn: bookInfo.isbn,
         title: bookInfo.title,
         author: bookInfo.author,
-        coverImage: bookInfo.coverImage,
+        coverImage: coverImageUrl,
         totalPages: bookInfo.totalPages,
         currentPage: 0,
         status: defaultStatus,
@@ -55,16 +57,13 @@ export default function AddBookModal({
         dateAdded: new Date().toISOString(),
       });
 
-      Alert.alert('Success', 'Book added to your library!');
+      alert('Book added to your library!');
       setIsbn('');
       onBookAdded();
       onClose();
     } catch (error: any) {
       console.error('Error adding book:', error);
-      Alert.alert(
-        'Error',
-        error.response?.data?.detail || 'Failed to add book. Please check the ISBN and try again.'
-      );
+      alert(error.response?.data?.detail || 'Failed to add book. Please check the ISBN and try again.');
     } finally {
       setLoading(false);
     }
@@ -76,11 +75,7 @@ export default function AddBookModal({
   };
 
   const handleScannerClick = () => {
-    Alert.alert(
-      'Scanner Not Available on Web',
-      'Barcode scanning is only available on iOS and Android devices. Please enter the ISBN manually or use the Expo Go app on your mobile device.',
-      [{ text: 'OK' }]
-    );
+    alert('Barcode scanning is only available on iOS and Android devices. Please enter the ISBN manually or use the Expo Go app on your mobile device.');
   };
 
   return (
@@ -131,7 +126,7 @@ export default function AddBookModal({
               placeholder="Enter ISBN (e.g., 9780439708180)"
               value={isbn}
               onChangeText={setIsbn}
-              keyboardType="numeric"
+              keyboardType="default"
               editable={!loading}
             />
 
@@ -231,7 +226,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
   },
   addButton: {
     backgroundColor: '#4A90E2',
@@ -239,6 +234,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
+    marginBottom: 40,
   },
   addButtonDisabled: {
     backgroundColor: '#C7C7CC',
