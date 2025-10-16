@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "MyReads - Book Tracker",
-    "slug": "myreads",
+    "name": "Novello",
+    "slug": "novello",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
