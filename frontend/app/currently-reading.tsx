@@ -115,7 +115,6 @@ export default function CurrentlyReadingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   content: {
     flex: 1,
@@ -133,12 +132,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#8E8E93',
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#C7C7CC',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -149,7 +146,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#4A90E2',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
