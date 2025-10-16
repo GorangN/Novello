@@ -1,103 +1,143 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ============================================
+# Global
+# ============================================
 
-# IDE and editors
-.idea/
-.vscode/
-
-# Dependencies
+# Node
 node_modules/
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# Testing
-/coverage
-
-# Next.js
-/.next/
-/out/
-next-env.d.ts
-*.tsbuildinfo
-
-# Production builds
-/build
-dist/
-dist
-
-# Environment files (comprehensive coverage)
-
-*token.json*
-*credentials.json*
-
-# Logs and debug files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
-dump.rdb
+pnpm-debug.log*
+package-lock.json
+yarn.lock
 
-# System files
+# Logs
+logs
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# OS junk
 .DS_Store
-*.pem
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
 
-# Python
-__pycache__/
-*pyc*
-venv/
-.venv/
+# Environment / Secrets
+.env
+.env.*
+!.env.example
 
-# Development tools
-chainlit.md
-.chainlit
-.ipynb_checkpoints/
-.ac
-
-# Deployment
-.vercel
-
-# Data and databases
-agenthub/agents/youtube/db
-
-# Archive files and large assets
-**/*.zip
-**/*.tar.gz
-**/*.tar
-**/*.tgz
-*.pack
-*.deb
-*.dylib
-
-# Build caches
+# Cache / Temporary
+.tmp/
+temp/
 .cache/
+dist/
+build/
+out/
+coverage/
+.expo/
+.expo-shared/
+.expo-dev/
+.expo/*
+web-build/
 
-# Mobile development
-android-sdk/ -e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
+# IDE / Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.iml
+
+# Expo
+.expo/
+.expo-shared/
+web-build/
+android/
+ios/
+expo-env.d.ts
+metro-cache/
+babel-cache/
+expo-debug.log
+.expo-notifications/
+
+# React Native
+*.keystore
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.orig
+
+# TypeScript / JS build outputs
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Local development files
+*.local
+*.dev.js
+*.dev.ts
+*.bak
+*.backup
+
+# ============================================
+# Frontend (Expo)
+# ============================================
+
+/frontend/node_modules/
+/frontend/.expo/
+/frontend/.expo-shared/
+/frontend/web-build/
+/frontend/.env
+/frontend/.cache/
+/frontend/dist/
+/frontend/.vscode/
+
+# ============================================
+# Backend (Node.js or Express)
+# ============================================
+
+/backend/node_modules/
+/backend/.env
+/backend/dist/
+/backend/build/
+/backend/logs/
+
+# ============================================
+# Miscellaneous
+# ============================================
+
+*.orig
+*.rej
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# ============================================
+# OS and IDE Specific
+# ============================================
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+ehthumbs_vista.db
+$RECYCLE.BIN/
+
+# JetBrains
+.idea/
+*.iml
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
