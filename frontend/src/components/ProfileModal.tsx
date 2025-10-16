@@ -6,9 +6,11 @@ import {
   Modal,
   TouchableOpacity,
   Image,
+  Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useRouter } from 'expo-router';
 
 interface ProfileModalProps {
